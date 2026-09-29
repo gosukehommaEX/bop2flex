@@ -84,6 +84,7 @@ table1 <- c(
         "grid search}"),
   "\\label{tab:planned}",
   "\\scriptsize",
+  "\\setlength{\\tabcolsep}{3pt}",
   "\\begin{tabular}{lllllllrrrllrrr}",
   "\\toprule",
   paste("Setting & $p_0$ & $p_1$ & $\\alpha$ & Looks & Design & Futility &",
@@ -200,9 +201,9 @@ theme_article <- theme_bw(base_size = 9) +
 scen_n <- vapply(scenarios$looks, function(x) max(parse_looks(x)),
                  integer(1), USE.NAMES = FALSE)
 scen_lab <- stats::setNames(
-  sprintf("%s: p0 = %s, p1 = %s\nN = %d, alpha = %s", scenarios$scenario,
-          format(scenarios$p0), format(scenarios$p1), scen_n,
-          format(scenarios$alpha)),
+  sprintf("%s: p0 = %.2f, p1 = %.2f\nN = %d, alpha = %.2f",
+          scenarios$scenario, scenarios$p0, scenarios$p1, scen_n,
+          scenarios$alpha),
   scenarios$scenario)
 add_factors <- function(df) {
   df$scenario_f <- factor(unname(scen_lab[df$scenario]),
@@ -271,7 +272,12 @@ p1 <- ggplot(fig1, aes(x = x, y = y, colour = method, shape = method,
   scale_shape_manual(values = c(Planned = 16, Naive = 17, Proposed = 15)) +
   scale_linetype_manual(values = c("Efficacy boundary" = "solid",
                                    "Futility boundary" = "dashed",
-                                   "Type I error rate" = "solid")) +
+                                   "Type I error rate" = "solid"),
+                        breaks = c("Efficacy boundary",
+                                   "Futility boundary")) +
+  scale_y_continuous(breaks = function(lim) {
+    if (lim[2] > 1) seq(0, ceiling(lim[2]), by = 2) else pretty(lim)
+  }) +
   labs(x = "Number of patients", y = NULL, colour = NULL, shape = NULL,
        linetype = NULL) +
   theme_article
