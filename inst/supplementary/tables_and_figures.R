@@ -123,7 +123,7 @@ for (s in scenarios$scenario) {
     f <- fs[fs$id == x$id[j], ]
     rows <- c(rows, row_tex(
       if (j == 1) s else "", x$design[j], x$rule[j],
-      fmt(f$changed_pct, 1), f$max_raise, f$n_final_zero,
+      round(f$changed_pct * f$n / 100), f$max_raise, f$n_final_zero,
       fmt(f$type1_floor_mean, 3), fmt(f$type1_nofloor_mean, 3),
       fmt(f$type1_floor_max, 3), fmt(f$type1_nofloor_max, 3),
       fmt(f$power_floor_mean, 3), fmt(f$power_nofloor_mean, 3)))
@@ -137,20 +137,21 @@ writeLines(table_env(
           "\\multicolumn{2}{c}{Type I error, max} &",
           "\\multicolumn{2}{c}{Power, mean} \\\\"),
     "\\cmidrule(lr){7-8}\\cmidrule(lr){9-10}\\cmidrule(lr){11-12}",
-    paste("Setting & Design & Futility & Changed (\\%) & Largest raise &",
+    paste("Setting & Design & Futility & Changed & Largest raise &",
           "Final boundary 0 & Floor & No floor & Floor & No floor & Floor &",
           "No floor \\\\")),
   rows,
-  paste("The proposed boundaries were computed with and without the floor,",
-        "which keeps the efficacy boundary at or above the smallest number",
-        "of responses whose posterior probability reaches the planned final",
-        "cutoff $\\lambda$. Changed: percentage of schedules in which the",
-        "floor raised at least one efficacy boundary. Largest raise: largest",
-        "increase of an efficacy boundary, in responses. Final boundary 0:",
-        "number of schedules in which, without the floor, the null hypothesis",
-        "would be rejected at the final analysis with no responses. Both",
-        "versions keep the type I error rate at or below the nominal level.",
-        "All operating characteristics are exact.")),
+  sprintf(paste(
+    "The proposed boundaries were computed with and without the floor,",
+    "which keeps the efficacy boundary at or above the smallest number",
+    "of responses whose posterior probability reaches the planned final",
+    "cutoff $\\lambda$. Changed: number of the %d schedules in which the",
+    "floor raised at least one efficacy boundary. Largest raise: largest",
+    "increase of an efficacy boundary, in responses. Final boundary 0:",
+    "number of schedules in which, without the floor, the null hypothesis",
+    "would be rejected at the final analysis with no responses. Both",
+    "versions keep the type I error rate at or below the nominal level.",
+    "All operating characteristics are exact."), fs$n[1])),
   file.path(tab_dir, "tableS2_efficacy_floor.tex"))
 
 # Table S3: exhaustive enumeration
