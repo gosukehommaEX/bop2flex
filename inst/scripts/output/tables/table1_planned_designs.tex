@@ -1,0 +1,46 @@
+\begin{sidewaystable}
+\centering
+\caption{Planned BOP2 and BOP2-FE designs selected by the exact grid search}
+\label{tab:planned}
+\scriptsize
+\begin{tabular}{lllllllrrrllrrr}
+\toprule
+Setting & $p_0$ & $p_1$ & $\alpha$ & Looks & Design & Futility & $\lambda$ & $\gamma$ & $\eta$ & Futility boundaries & Efficacy boundaries & Type I error & Power & $E_0(N)$ \\
+\midrule
+S1 & 0.20 & 0.40 & 0.10 & $10, 15, \ldots, 40$ & BOP2 & binding & 0.84 & 0.64 & -- & 1, 2, 4, 5, 7, 9, 10 & --, --, --, --, --, --, 11 & 0.097 & 0.881 & 20.3 \\
+ &  &  &  &  & BOP2-FE-1 & binding & 0.87 & 0.94 & 2.4 & 1, 2, 3, 5, 7, 8, 11 & 6, 8, 9, 9, 10, 11, 12 & 0.099 & 0.890 & 20.3 \\
+ &  &  &  &  & BOP2-FE-2 & binding & 0.88 & 0.95 & -- & 1, 2, 3, 5, 7, 9, 11 & 7, 8, 8, 9, 10, 11, 12 & 0.098 & 0.887 & 20.0 \\
+ &  &  &  &  & BOP2-FE-1 & non-binding & 0.91 & 1.00 & 2.5 & 1, 2, 3, 5, 7, 9, 11 & 7, 8, 9, 10, 11, 12, 12 & 0.092 & 0.877 & 20.7 \\
+\midrule
+S2 & 0.30 & 0.50 & 0.10 & $10, 15, \ldots, 40$ & BOP2 & binding & 0.84 & 0.98 & -- & 2, 3, 5, 7, 9, 12, 15 & --, --, --, --, --, --, 16 & 0.097 & 0.876 & 22.8 \\
+ &  &  &  &  & BOP2-FE-1 & binding & 0.87 & 0.88 & 2.9 & 2, 4, 5, 8, 10, 12, 15 & 8, 10, 11, 13, 14, 15, 16 & 0.098 & 0.856 & 19.6 \\
+ &  &  &  &  & BOP2-FE-2 & binding & 0.91 & 0.95 & -- & 2, 3, 5, 8, 10, 12, 16 & 9, 10, 11, 13, 14, 15, 17 & 0.082 & 0.847 & 20.8 \\
+ &  &  &  &  & BOP2-FE-1 & non-binding & 0.91 & 0.95 & 2.1 & 2, 3, 5, 8, 10, 12, 16 & 8, 9, 11, 13, 14, 15, 17 & 0.097 & 0.848 & 20.6 \\
+\midrule
+S3 & 0.40 & 0.60 & 0.10 & $10, 15, \ldots, 40$ & BOP2 & binding & 0.83 & 0.55 & -- & 3, 5, 8, 10, 13, 16, 19 & --, --, --, --, --, --, 20 & 0.098 & 0.857 & 20.8 \\
+ &  &  &  &  & BOP2-FE-1 & binding & 0.90 & 0.95 & 1.6 & 2, 5, 7, 10, 13, 16, 20 & 8, 11, 13, 15, 17, 19, 21 & 0.099 & 0.867 & 22.3 \\
+ &  &  &  &  & BOP2-FE-2 & binding & 0.90 & 0.95 & -- & 2, 5, 7, 10, 13, 16, 20 & 9, 11, 13, 15, 17, 19, 21 & 0.096 & 0.866 & 22.4 \\
+ &  &  &  &  & BOP2-FE-1 & non-binding & 0.93 & 0.97 & 2.3 & 2, 5, 7, 10, 13, 16, 20 & 9, 11, 13, 16, 17, 19, 21 & 0.100 & 0.865 & 22.5 \\
+\midrule
+S4 & 0.50 & 0.70 & 0.10 & $10, 15, \ldots, 40$ & BOP2 & binding & 0.90 & 0.94 & -- & 3, 6, 9, 12, 16, 19, 24 & --, --, --, --, --, --, 25 & 0.073 & 0.873 & 24.8 \\
+ &  &  &  &  & BOP2-FE-1 & binding & 0.91 & 0.97 & 2.7 & 3, 6, 9, 12, 16, 19, 24 & 10, 13, 15, 18, 20, 23, 25 & 0.094 & 0.885 & 23.9 \\
+ &  &  &  &  & BOP2-FE-2 & binding & 0.92 & 0.99 & -- & 3, 6, 9, 12, 16, 20, 24 & 10, 13, 15, 18, 20, 23, 25 & 0.092 & 0.881 & 23.6 \\
+ &  &  &  &  & BOP2-FE-1 & non-binding & 0.91 & 0.97 & 2.7 & 3, 6, 9, 12, 16, 19, 24 & 10, 13, 15, 18, 20, 23, 25 & 0.098 & 0.885 & 23.9 \\
+\midrule
+S5 & 0.10 & 0.30 & 0.10 & $10, 15, \ldots, 30$ & BOP2 & binding & 0.84 & 0.70 & -- & 0, 1, 2, 3, 5 & --, --, --, --, 6 & 0.064 & 0.891 & 17.7 \\
+ &  &  &  &  & BOP2-FE-1 & binding & 0.84 & 0.70 & 1.8 & 0, 1, 2, 3, 5 & 4, 5, 5, 5, 6 & 0.100 & 0.906 & 16.9 \\
+ &  &  &  &  & BOP2-FE-2 & binding & 0.84 & 0.70 & -- & 0, 1, 2, 3, 5 & 4, 5, 5, 5, 6 & 0.100 & 0.906 & 16.9 \\
+ &  &  &  &  & BOP2-FE-1 & non-binding & 0.87 & 0.73 & 2.1 & 0, 1, 2, 3, 5 & 4, 5, 5, 6, 6 & 0.087 & 0.896 & 17.1 \\
+\midrule
+S6 & 0.20 & 0.35 & 0.05 & $20, 30, \ldots, 60$ & BOP2 & binding & 0.94 & 0.68 & -- & 3, 6, 9, 12, 17 & --, --, --, --, 18 & 0.038 & 0.794 & 33.2 \\
+ &  &  &  &  & BOP2-FE-1 & binding & 0.94 & 0.68 & 3.0 & 3, 6, 9, 12, 17 & 10, 13, 14, 16, 18 & 0.049 & 0.809 & 32.6 \\
+ &  &  &  &  & BOP2-FE-2 & binding & 0.94 & 0.68 & -- & 3, 6, 9, 12, 17 & 11, 12, 14, 16, 18 & 0.050 & 0.809 & 32.6 \\
+ &  &  &  &  & BOP2-FE-1 & non-binding & 0.96 & 0.79 & 2.3 & 3, 6, 9, 12, 17 & 10, 12, 15, 17, 18 & 0.048 & 0.800 & 32.8 \\
+\bottomrule
+\end{tabular}
+\par\medskip
+\begin{minipage}{0.95\textwidth}
+\footnotesize
+Looks are the planned cumulative sample sizes, the last being the maximum sample size $N$. The tuning parameters maximize the power subject to a type I error rate of at most $\alpha$, with ties broken by the expected sample size under $p_0$, over $\lambda$ from 0 to 1 and $\gamma$ from 0.01 to 1 in steps of 0.01 and $\eta$ from 0.1 to 3 in steps of 0.1. BOP2-FE-1 and BOP2-FE-2 use the power and the O'Brien-Fleming type efficacy cutoffs. At an interim analysis the trial stops for futility when the number of responses is at most the futility boundary and for efficacy when it is at least the efficacy boundary; at the final analysis the null hypothesis is rejected when the number of responses is at least the efficacy boundary. A dash means no efficacy stopping. The type I error rate is computed with the futility rule shown; the power and $E_0(N)$, the expected sample size under $p_0$, are computed with the futility boundaries applied. All values are exact.
+\end{minipage}
+\end{sidewaystable}
