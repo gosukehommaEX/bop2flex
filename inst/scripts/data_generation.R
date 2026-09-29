@@ -441,8 +441,30 @@ recal_summary <- do.call(rbind, lapply(split(oracle, oracle$id), function(x) {
 }))
 rownames(recal_summary) <- NULL
 
+# Power of the proposed boundaries against the conditional error rule when
+# only the final sample size deviates, over the final sample sizes other than
+# the planned maximum (at the planned maximum both equal the planned design)
+tol_power <- 1e-9
+ce_vs_summary <- do.call(rbind, lapply(split(final_dev, final_dev$id),
+                                       function(x) {
+  n_max <- planned[[x$id[1]]]$N
+  pr <- x[x$method == "spending" & x$final_n != n_max, c("final_n", "power")]
+  ce <- x[x$method == "ce" & x$final_n != n_max, c("final_n", "power")]
+  pc <- merge(pr, ce, by = "final_n", suffixes = c("_proposed", "_ce"))
+  d <- pc$power_proposed - pc$power_ce
+  data.frame(id = x$id[1], scenario = x$scenario[1], design = x$design[1],
+             rule = x$rule[1], n = nrow(pc),
+             n_higher = sum(d > tol_power),
+             n_equal = sum(abs(d) <= tol_power),
+             n_lower = sum(d < -tol_power),
+             diff_mean = mean(d), diff_min = min(d), diff_max = max(d),
+             stringsAsFactors = FALSE)
+}))
+rownames(ce_vs_summary) <- NULL
+
 saveRDS(list(random = random_summary, oracle = oracle_summary,
-             final = final_summary, recalibrated = recal_summary),
+             final = final_summary, recalibrated = recal_summary,
+             ce_vs_proposed = ce_vs_summary),
         file.path(out_dir, "summaries.rds"))
 for (i in seq_len(nrow(recal_summary))) {
   r <- recal_summary[i, ]
@@ -478,6 +500,15 @@ for (i in seq_len(nrow(final_summary))) {
   for (v in c("type1_max", "final_at_max", "n_exceed", "n_schedules")) {
     add_number(paste("final", r$id, lab, v, sep = "."), r[[v]],
                paste("Final sample size deviation:", v))
+  }
+}
+for (i in seq_len(nrow(ce_vs_summary))) {
+  r <- ce_vs_summary[i, ]
+  for (v in c("n", "n_higher", "n_equal", "n_lower", "diff_mean", "diff_min",
+              "diff_max")) {
+    add_number(paste("ce_vs_proposed", r$id, v, sep = "."), r[[v]],
+               paste("Final sample size deviation, power of the proposed",
+                     "boundaries minus the conditional error rule:", v))
   }
 }
 
@@ -526,6 +557,23 @@ for (meth in c("ce", "recalibrated", "oracle")) {
              "Largest type I error rate over final sample size deviations")
   add_number(paste0("overall.final.", meth, ".n_exceed"), sum(x$n_exceed),
              "Final sample size deviations with type I error above alpha")
+}
+for (dg in designs$design) {
+  x <- ce_vs_summary[ce_vs_summary$design == dg &
+                       ce_vs_summary$rule == "binding", ]
+  key <- paste("overall.ce_vs_proposed", dg, "binding", sep = ".")
+  add_number(paste0(key, ".n"), sum(x$n),
+             "Final sample sizes compared, proposed against conditional error")
+  add_number(paste0(key, ".n_higher"), sum(x$n_higher),
+             "Final sample sizes with higher power for the proposed boundaries")
+  add_number(paste0(key, ".n_equal"), sum(x$n_equal),
+             "Final sample sizes with equal power")
+  add_number(paste0(key, ".n_lower"), sum(x$n_lower),
+             "Final sample sizes with lower power for the proposed boundaries")
+  add_number(paste0(key, ".diff_min"), min(x$diff_min),
+             "Smallest power difference, proposed minus conditional error")
+  add_number(paste0(key, ".diff_max"), max(x$diff_max),
+             "Largest power difference, proposed minus conditional error")
 }
 xo <- oracle_summary[oracle_summary$method == "spending" &
                        grepl("_binding$", oracle_summary$id), ]
