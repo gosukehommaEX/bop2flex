@@ -14,6 +14,20 @@
 # All operating characteristics are exact. Random elements are the schedules
 # of actual sample sizes only. The running time is about one hour, most of it
 # for the oracle designs (n_oracle below).
+#
+# Methods compared at the actual analyses:
+#   naive         planned probability cutoffs at the actual sample sizes
+#   spending      flex_update(), the proposed method
+#   recalibrated  naive boundaries at the interim analyses and, at the final
+#                 analysis, the final boundary of the design calibrated again
+#                 on the actual schedule (the design re-run with the actual
+#                 sample sizes once they are known)
+#   ce            conditional error rule for a deviation of the final sample
+#                 size only: given the count at the last interim analysis,
+#                 the final boundary keeps the conditional type I error rate
+#                 of the planned design
+#   oracle        design calibrated on the actual schedule as if it had been
+#                 known in advance (not applicable in practice; a benchmark)
 
 if (!exists("flex_design", mode = "function")) library(bop2flex)
 
@@ -56,6 +70,58 @@ example_id <- "S1_BOP2-FE-1_binding"
 example_schedule <- c(12, 16, 19, 25, 31, 37, 39)
 
 parse_looks <- function(x) as.integer(strsplit(x, ",")[[1]])
+
+# Distribution of the number of responses after adding inc patients
+conv <- function(dist, inc, p) {
+  pmf <- stats::dbinom(0:inc, inc, p)
+  out <- numeric(length(dist) + inc)
+  for (j in 0:inc) {
+    idx <- seq_along(dist) + j
+    out[idx] <- out[idx] + pmf[j + 1] * dist
+  }
+  out
+}
+
+# Operating characteristics of the conditional error rule when the interim
+# analyses follow the plan and the final analysis has n_final patients
+ce_final_oc <- function(d, n_final, p, binding) {
+  num_looks <- length(d$n)
+  m_last <- d$n[num_looks - 1]
+  running <- function(pp, bind) {
+    dist <- 1
+    prev <- 0
+    rej <- 0
+    en <- 0
+    for (k in seq_len(num_looks - 1)) {
+      dist <- conv(dist, d$n[k] - prev, pp)
+      prev <- d$n[k]
+      s <- 0:d$n[k]
+      at_eff <- s >= d$boundary$efficacy[k]
+      at_fut <- if (bind) s <= d$boundary$futility[k] & !at_eff else
+        rep(FALSE, length(s))
+      rej <- rej + sum(dist[at_eff])
+      en <- en + d$n[k] * sum(dist[at_eff | at_fut])
+      dist[at_eff | at_fut] <- 0
+    }
+    list(dist = dist, rej = rej, en = en)
+  }
+  run_p <- running(p, binding)
+  rem_plan <- d$N - m_last
+  rem <- n_final - m_last
+  e_plan <- d$boundary$efficacy[num_looks]
+  rej <- run_p$rej
+  for (s in 0:m_last) {
+    w <- run_p$dist[s + 1]
+    if (w == 0) next
+    cond_plan <- stats::pbinom(e_plan - s - 1, rem_plan, d$p0,
+                               lower.tail = FALSE)
+    need <- 0:(rem + 1)
+    cond_new <- stats::pbinom(need - 1, rem, d$p0, lower.tail = FALSE)
+    c_min <- min(need[cond_new <= cond_plan * (1 + 1e-9)])
+    rej <- rej + w * stats::pbinom(c_min - 1, rem, p, lower.tail = FALSE)
+  }
+  list(reject = rej, en = run_p$en + n_final * sum(run_p$dist))
+}
 
 # Configurations: every design with binding futility, and BOP2-FE-1 with
 # non-binding futility
@@ -209,11 +275,11 @@ rownames(random) <- NULL
 saveRDS(schedules, file.path(out_dir, "random_schedules.rds"))
 saveRDS(random, file.path(out_dir, "random_results.rds"))
 
-# 4. Oracle designs calibrated on the actual schedule, binding futility,
-# moderate deviations
+# 4. Oracle designs calibrated on the actual schedule and the recalibrated
+# final boundary, moderate deviations
 message("Oracle designs (", elapsed(), ")")
 oracle <- list()
-for (i in which(config$binding)) {
+for (i in seq_len(nrow(config))) {
   sc <- scenarios[config$s[i], ]
   dg <- designs[config$d[i], ]
   sch <- schedules[[paste(sc$scenario, "moderate", sep = "_")]]
@@ -221,13 +287,30 @@ for (i in which(config$binding)) {
   res <- lapply(seq_along(sch), function(j) {
     od <- tryCatch(
       flex_design(p0 = sc$p0, p1 = sc$p1, n = sch[[j]], alpha = sc$alpha,
-                  type = dg$type, method = dg$method),
+                  type = dg$type, method = dg$method,
+                  binding = config$binding[i]),
       error = function(e) NULL)
-    data.frame(id = config$id[i], schedule = j,
-               oracle_type1 = if (is.null(od)) NA_real_ else od$oc$type1,
-               oracle_power = if (is.null(od)) NA_real_ else od$oc$power,
-               oracle_en0 = if (is.null(od)) NA_real_ else od$oc$en0,
-               stringsAsFactors = FALSE)
+    out <- data.frame(id = config$id[i], schedule = j,
+                      oracle_type1 = NA_real_, oracle_power = NA_real_,
+                      oracle_en0 = NA_real_, oracle_final = NA_integer_,
+                      recal_type1 = NA_real_, recal_power = NA_real_,
+                      stringsAsFactors = FALSE)
+    if (!is.null(od)) {
+      nv <- flex_naive(planned[[i]], sch[[j]], final = TRUE)$bounds
+      k <- nrow(nv)
+      eff <- nv$efficacy
+      fut <- nv$futility
+      eff[k] <- od$boundary$efficacy[k]
+      fut[k] <- eff[k] - 1L
+      out$oracle_type1 <- od$oc$type1
+      out$oracle_power <- od$oc$power
+      out$oracle_en0 <- od$oc$en0
+      out$oracle_final <- eff[k]
+      out$recal_type1 <- flex_oc(sch[[j]], fut, eff, sc$p0,
+                                 binding = config$binding[i])$reject
+      out$recal_power <- flex_oc(sch[[j]], fut, eff, sc$p1)$reject
+    }
+    out
   })
   oracle[[length(oracle) + 1]] <- do.call(rbind, res)
   message("  ", config$id[i], " done (", elapsed(), ")")
@@ -246,6 +329,42 @@ for (i in seq_len(nrow(config))) {
                 d$N + final_range)
   sch <- lapply(finals, function(f) c(d$n[-num_looks], f))
   res <- flex_compare(d, sch)
+  extra <- lapply(seq_along(finals), function(j) {
+    f <- finals[j]
+    ce0 <- ce_final_oc(d, f, d$p0, d$binding)
+    ce0_applied <- ce_final_oc(d, f, d$p0, TRUE)
+    ce1 <- ce_final_oc(d, f, d$p1, TRUE)
+    od <- tryCatch(
+      flex_design(p0 = d$p0, p1 = d$p1, n = sch[[j]], alpha = d$alpha,
+                  type = d$type,
+                  method = if (is.na(d$method)) "power" else d$method,
+                  binding = d$binding),
+      error = function(e) NULL)
+    if (is.null(od)) {
+      na_oc <- list(reject = NA_real_, en = NA_real_)
+      rc0 <- rc0_applied <- rc1 <- na_oc
+      od <- list(oc = list(type1 = NA_real_, power = NA_real_,
+                           en0 = NA_real_, en1 = NA_real_))
+    } else {
+      eff <- c(d$boundary$efficacy[-num_looks],
+               od$boundary$efficacy[num_looks])
+      fut <- c(d$boundary$futility[-num_looks], eff[num_looks] - 1L)
+      rc0 <- flex_oc(sch[[j]], fut, eff, d$p0, binding = d$binding)
+      rc0_applied <- flex_oc(sch[[j]], fut, eff, d$p0)
+      rc1 <- flex_oc(sch[[j]], fut, eff, d$p1)
+    }
+    data.frame(
+      schedule = j, looks = paste(sch[[j]], collapse = ","),
+      method = c("ce", "recalibrated", "oracle"),
+      type1 = c(ce0$reject, rc0$reject, od$oc$type1),
+      power = c(ce1$reject, rc1$reject, od$oc$power),
+      en0 = c(ce0_applied$en, rc0_applied$en, od$oc$en0),
+      en1 = c(ce1$en, rc1$en, od$oc$en1),
+      exceeds_alpha = c(ce0$reject, rc0$reject, od$oc$type1) >
+        d$alpha * (1 + 1e-9),
+      stringsAsFactors = FALSE)
+  })
+  res <- rbind(res, do.call(rbind, extra))
   res$final_n <- finals[res$schedule]
   res$id <- config$id[i]
   res$scenario <- config$scenario[i]
@@ -275,8 +394,7 @@ random_summary <- do.call(rbind, lapply(split(random, grp), function(x) {
 rownames(random_summary) <- NULL
 
 paired <- merge(random[random$deviation == "moderate" &
-                         random$schedule <= n_oracle &
-                         random$rule == "binding", ],
+                         random$schedule <= n_oracle, ],
                 oracle, by = c("id", "schedule"))
 paired$power_diff <- paired$power - paired$oracle_power
 grp_o <- interaction(paired$id, paired$method, drop = TRUE, sep = "|",
@@ -304,14 +422,36 @@ final_summary <- do.call(rbind, lapply(split(final_dev, grp_f), function(x) {
   data.frame(id = x$id[1], scenario = x$scenario[1], design = x$design[1],
              rule = x$rule[1], method = x$method[1],
              type1_max = x$type1[j], final_at_max = x$final_n[j],
-             n_exceed = sum(x$exceeds_alpha), n_schedules = nrow(x),
+             n_exceed = sum(x$exceeds_alpha, na.rm = TRUE),
+             n_schedules = nrow(x),
              stringsAsFactors = FALSE)
 }))
 rownames(final_summary) <- NULL
 
+recal_summary <- do.call(rbind, lapply(split(oracle, oracle$id), function(x) {
+  a <- planned[[x$id[1]]]$alpha
+  ok <- !is.na(x$recal_type1)
+  data.frame(id = x$id[1], n = sum(ok), n_failed = sum(!ok),
+             recal_type1_mean = mean(x$recal_type1[ok]),
+             recal_type1_max = max(x$recal_type1[ok]),
+             recal_exceed_pct = 100 * mean(x$recal_type1[ok] > a * (1 + 1e-9)),
+             recal_power_mean = mean(x$recal_power[ok]),
+             oracle_power_mean = mean(x$oracle_power[ok]),
+             stringsAsFactors = FALSE)
+}))
+rownames(recal_summary) <- NULL
+
 saveRDS(list(random = random_summary, oracle = oracle_summary,
-             final = final_summary),
+             final = final_summary, recalibrated = recal_summary),
         file.path(out_dir, "summaries.rds"))
+for (i in seq_len(nrow(recal_summary))) {
+  r <- recal_summary[i, ]
+  for (v in c("n", "n_failed", "recal_type1_mean", "recal_type1_max",
+              "recal_exceed_pct", "recal_power_mean", "oracle_power_mean")) {
+    add_number(paste("recalibrated", r$id, v, sep = "."), r[[v]],
+               paste("Recalibrated final boundary, moderate deviations:", v))
+  }
+}
 
 for (i in seq_len(nrow(random_summary))) {
   r <- random_summary[i, ]
@@ -371,14 +511,31 @@ add_number("overall.proposed.n_evaluated", sum(random$method == "spending"),
 add_number("overall.final.proposed.n_exceed",
            sum(final_dev$exceeds_alpha[final_dev$method == "spending"]),
            "Final deviations with a type I error rate above alpha, proposed")
-xo <- oracle_summary[oracle_summary$method == "spending", ]
+xr <- recal_summary[grepl("_binding$", recal_summary$id), ]
+add_number("overall.recalibrated.binding.type1_max", max(xr$recal_type1_max),
+           "Largest type I error rate of the recalibrated final boundary")
+add_number("overall.recalibrated.binding.exceed_pct_max",
+           max(xr$recal_exceed_pct),
+           "Largest percentage above alpha, recalibrated final boundary")
+add_number("overall.recalibrated.binding.exceed_pct_min",
+           min(xr$recal_exceed_pct),
+           "Smallest percentage above alpha, recalibrated final boundary")
+for (meth in c("ce", "recalibrated", "oracle")) {
+  x <- final_summary[final_summary$method == meth, ]
+  add_number(paste0("overall.final.", meth, ".type1_max"), max(x$type1_max),
+             "Largest type I error rate over final sample size deviations")
+  add_number(paste0("overall.final.", meth, ".n_exceed"), sum(x$n_exceed),
+             "Final sample size deviations with type I error above alpha")
+}
+xo <- oracle_summary[oracle_summary$method == "spending" &
+                       grepl("_binding$", oracle_summary$id), ]
 add_number("overall.oracle.proposed.diff_mean_min", min(xo$diff_mean),
            "Smallest mean power difference, proposed minus oracle")
 add_number("overall.oracle.proposed.diff_mean_max", max(xo$diff_mean),
            "Largest mean power difference, proposed minus oracle")
 add_number("overall.oracle.proposed.diff_min", min(xo$diff_min),
            "Largest power loss of the proposed design against the oracle")
-add_number("overall.oracle.n_failed", sum(oracle_summary$n_failed) / 2,
+add_number("overall.oracle.n_failed", sum(recal_summary$n_failed),
            "Oracle calibrations without a feasible design")
 
 numbers <- do.call(rbind, numbers)

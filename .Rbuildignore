@@ -3,3 +3,4 @@
 ^LICENSE\.md$
 ^\.github$
 ^inst/scripts/output$
+^inst/supplementary/output$

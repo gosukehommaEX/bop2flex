@@ -65,6 +65,8 @@ The procedure has three properties.
 * For any sequence of analysis sample sizes chosen without regard to the observed responses, the type I error rate is at most the nominal level.
 * Efficacy is never claimed with weaker posterior evidence than the planned final analysis requires. The efficacy boundary is never below the smallest count whose posterior probability `Pr(p > p0 | data)` reaches the final cutoff `lambda`. Without this floor, a trial with few continuing outcomes under the null could reject with an efficacy boundary of zero.
 
+For sensitivity analyses, `flex_update()` accepts another spending function through `spending` and omits the floor with `efficacy_floor = FALSE`; the type I error guarantee holds in both cases, but only the implied spending function recovers the planned boundaries.
+
 Futility stopping is binding by default, as in Zhou et al. (2017) and Xu et al. (2025). With `binding = FALSE` the type I error rate is computed without the futility boundaries, and the guarantee holds whether or not they are followed. Both efficacy cutoffs of Xu et al. (2025) are available, the power function (`method = "power"`, BOP2-FE-1) and the O'Brien-Fleming type function (`method = "OF"`, BOP2-FE-2). The BOP2 design with futility stopping only is obtained with `type = "BOP2"`.
 
 ## Functions

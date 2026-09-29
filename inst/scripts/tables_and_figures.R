@@ -16,6 +16,9 @@ tab_dir <- file.path("inst", "scripts", "output", "tables")
 fig_dir <- file.path("inst", "scripts", "output", "figures")
 dir.create(tab_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
+# Remove earlier outputs so that only the current tables and figures remain
+unlink(list.files(tab_dir, full.names = TRUE))
+unlink(list.files(fig_dir, full.names = TRUE))
 
 pl <- readRDS(file.path(data_dir, "planned_designs.rds"))
 worked <- readRDS(file.path(data_dir, "worked_example.rds"))
@@ -56,70 +59,10 @@ bound_tex <- function(b, looks, efficacy) {
   paste(out, collapse = ", ")
 }
 
-# Table 1: planned designs
-rows <- character(0)
-for (s in scenarios$scenario) {
-  x <- ps[ps$scenario == s, ]
-  if (length(rows) > 0) rows <- c(rows, "\\midrule")
-  for (j in seq_len(nrow(x))) {
-    r <- x[j, ]
-    first <- j == 1
-    rows <- c(rows, paste0(
-      paste(if (first) r$scenario else "",
-            if (first) fmt(r$p0, 2) else "",
-            if (first) fmt(r$p1, 2) else "",
-            if (first) fmt(r$alpha, 2) else "",
-            if (first) looks_tex(r$looks) else "",
-            r$design, r$rule, fmt(r$lambda, 2), fmt(r$gamma, 2),
-            fmt(r$eta, 1), bound_tex(r$futility, r$looks, FALSE),
-            bound_tex(r$efficacy, r$looks, TRUE), fmt(r$type1, 3),
-            fmt(r$power, 3), fmt(r$en0, 1), sep = " & "),
-      " \\\\"))
-  }
-}
-table1 <- c(
-  "\\begin{sidewaystable}",
-  "\\centering",
-  paste("\\caption{Planned BOP2 and BOP2-FE designs selected by the exact",
-        "grid search}"),
-  "\\label{tab:planned}",
-  "\\scriptsize",
-  "\\setlength{\\tabcolsep}{3pt}",
-  "\\begin{tabular}{lllllllrrrllrrr}",
-  "\\toprule",
-  paste("Setting & $p_0$ & $p_1$ & $\\alpha$ & Looks & Design & Futility &",
-        "$\\lambda$ & $\\gamma$ & $\\eta$ & Futility boundaries &",
-        "Efficacy boundaries & Type I error & Power & $E_0(N)$ \\\\"),
-  "\\midrule",
-  rows,
-  "\\bottomrule",
-  "\\end{tabular}",
-  "\\par\\medskip",
-  "\\begin{minipage}{0.95\\textwidth}",
-  "\\footnotesize",
-  paste("Looks are the planned cumulative sample sizes, the last being the",
-        "maximum sample size $N$. The tuning parameters maximize the power",
-        "subject to a type I error rate of at most $\\alpha$, with ties broken",
-        "by the expected sample size under $p_0$, over $\\lambda$ from 0 to 1",
-        "and $\\gamma$ from 0.01 to 1 in steps of 0.01 and $\\eta$ from 0.1",
-        "to 3 in steps of 0.1. BOP2-FE-1 and BOP2-FE-2 use the power and the",
-        "O'Brien-Fleming type efficacy cutoffs. At an interim analysis the",
-        "trial stops for futility when the number of responses is at most",
-        "the futility boundary and for efficacy when it is at least the",
-        "efficacy boundary; at the final analysis the null hypothesis is",
-        "rejected when the number of responses is at least the efficacy",
-        "boundary. A dash means no efficacy stopping. The type I error rate",
-        "is computed with the futility rule shown; the power and $E_0(N)$,",
-        "the expected sample size under $p_0$, are computed with the",
-        "futility boundaries applied. All values are exact."),
-  "\\end{minipage}",
-  "\\end{sidewaystable}"
-)
-writeLines(table1, file.path(tab_dir, "table1_planned_designs.tex"))
-
-# Table 2: random schedules with moderate deviations
+# Table 1: random schedules with moderate deviations
 rs <- summ$random[summ$random$deviation == "moderate", ]
 os <- summ$oracle[summ$oracle$method == "spending", ]
+rc <- summ$recalibrated
 n_sim <- num("settings.n_sim")
 n_oracle <- num("settings.n_oracle")
 rows <- character(0)
@@ -130,19 +73,20 @@ for (s in scenarios$scenario) {
     id <- x$id[j]
     nv <- rs[rs$id == id & rs$method == "naive", ]
     pr <- rs[rs$id == id & rs$method == "spending", ]
+    rr <- rc[rc$id == id, ]
     od <- os$diff_mean[os$id == id]
     rows <- c(rows, paste0(
       paste(if (j == 1) s else "", x$design[j], x$rule[j],
             fmt(nv$type1_mean, 3), fmt(nv$type1_max, 3),
-            fmt(nv$exceed_pct, 1), fmt(pr$type1_mean, 3),
-            fmt(pr$type1_max, 3), fmt(pr$exceed_pct, 1),
-            fmt(x$power[j], 3), fmt(nv$power_mean, 3),
-            fmt(pr$power_mean, 3),
-            if (length(od) == 1) fmt(od, 3) else "--", sep = " & "),
+            fmt(nv$exceed_pct, 1), fmt(rr$recal_type1_mean, 3),
+            fmt(rr$recal_type1_max, 3), fmt(rr$recal_exceed_pct, 1),
+            fmt(pr$type1_mean, 3), fmt(pr$type1_max, 3),
+            fmt(pr$exceed_pct, 1), fmt(x$power[j], 3),
+            fmt(pr$power_mean, 3), fmt(od, 3), sep = " & "),
       " \\\\"))
   }
 }
-table2 <- c(
+table1 <- c(
   "\\begin{sidewaystable}",
   "\\centering",
   sprintf(paste0("\\caption{Type I error rate and power over %d random ",
@@ -150,15 +94,18 @@ table2 <- c(
                  "sample sizes}"), n_sim),
   "\\label{tab:random}",
   "\\scriptsize",
-  "\\begin{tabular}{lllrrrrrrrrrr}",
+  "\\setlength{\\tabcolsep}{3pt}",
+  "\\begin{tabular}{lllrrrrrrrrrrrr}",
   "\\toprule",
   paste(" & & & \\multicolumn{3}{c}{Type I error, naive} &",
+        "\\multicolumn{3}{c}{Type I error, recalibrated$^{a}$} &",
         "\\multicolumn{3}{c}{Type I error, proposed} &",
-        "\\multicolumn{4}{c}{Power} \\\\"),
-  "\\cmidrule(lr){4-6}\\cmidrule(lr){7-9}\\cmidrule(lr){10-13}",
+        "\\multicolumn{3}{c}{Power, proposed} \\\\"),
+  paste0("\\cmidrule(lr){4-6}\\cmidrule(lr){7-9}\\cmidrule(lr){10-12}",
+         "\\cmidrule(lr){13-15}"),
   paste("Setting & Design & Futility & Mean & Max & $>\\alpha$ (\\%) &",
-        "Mean & Max & $>\\alpha$ (\\%) & Planned & Naive & Proposed &",
-        "Proposed $-$ oracle \\\\"),
+        "Mean & Max & $>\\alpha$ (\\%) & Mean & Max & $>\\alpha$ (\\%) &",
+        "Planned & Mean & $-$ oracle$^{a}$ \\\\"),
   "\\midrule",
   rows,
   "\\bottomrule",
@@ -167,22 +114,23 @@ table2 <- c(
   "\\begin{minipage}{0.95\\textwidth}",
   "\\footnotesize",
   sprintf(paste(
-    "Settings and planned designs are given in Table~\\ref{tab:planned}.",
-    "Each planned interim sample size was shifted by an integer drawn",
-    "uniformly from $-%d$ to $%d$ and the maximum sample size by one drawn",
-    "from $-%d$ to $%d$, independently of the data; the same schedules were",
-    "used for all designs of a setting. Naive: the planned probability",
-    "cutoffs evaluated at the actual sample sizes. Proposed: boundaries from",
-    "the error spending function implied by the planned design, with the",
-    "efficacy boundary not below the planned final posterior cutoff. Mean",
-    "and Max are taken over schedules, and $>\\alpha$ is the percentage of",
-    "schedules with a type I error rate above the nominal level. Planned is",
-    "the power of the planned design on the planned schedule; Naive and",
-    "Proposed are averaged over schedules. Proposed $-$ oracle is the mean",
-    "difference in power between the proposed boundaries and the design",
-    "calibrated on the actual schedule as if it had been known in advance,",
-    "over the first %d schedules (binding futility only). All operating",
-    "characteristics are exact."),
+    "Settings S1 to S6 and the planned designs are given in Supplementary",
+    "Table S1. Each planned interim sample size was shifted by an integer",
+    "drawn uniformly from $-%d$ to $%d$ and the maximum sample size by one",
+    "drawn from $-%d$ to $%d$, independently of the data; the same schedules",
+    "were used for all designs of a setting. Naive: the planned probability",
+    "cutoffs evaluated at the actual sample sizes. Recalibrated: naive",
+    "boundaries at the interim analyses and, at the final analysis, the",
+    "final boundary of the design calibrated again on the actual schedule.",
+    "Proposed: boundaries from the error spending function implied by the",
+    "planned design, with the efficacy boundary not below the planned final",
+    "posterior cutoff. Mean and Max are taken over schedules, and $>\\alpha$",
+    "is the percentage of schedules with a type I error rate above the",
+    "nominal level. Planned is the power of the planned design on the",
+    "planned schedule. $-$ oracle is the mean difference in power between",
+    "the proposed boundaries and the design calibrated on the actual",
+    "schedule as if it had been known in advance. $^{a}$Over the first %d",
+    "schedules. All operating characteristics are exact."),
     num("settings.moderate.interim_shift"),
     num("settings.moderate.interim_shift"),
     num("settings.moderate.final_shift"),
@@ -190,7 +138,7 @@ table2 <- c(
   "\\end{minipage}",
   "\\end{sidewaystable}"
 )
-writeLines(table2, file.path(tab_dir, "table2_random_deviations.tex"))
+writeLines(table1, file.path(tab_dir, "table1_random_deviations.tex"))
 
 # Common settings of the figures
 cols <- c(Planned = "black", Naive = "#D55E00", Proposed = "#0072B2")
@@ -211,6 +159,7 @@ add_factors <- function(df) {
   df$design_f <- factor(df$design, levels = design_levels)
   df$method_f <- factor(ifelse(df$method == "naive", "Naive", "Proposed"),
                         levels = c("Naive", "Proposed"))
+  df$alpha_nom <- scenarios$alpha[match(df$scenario, scenarios$scenario)]
   df
 }
 alpha_lines <- data.frame(
@@ -287,51 +236,74 @@ save_figure(p1, "figure1_worked_example", width = 7, height = 3.4)
 rb <- add_factors(random[random$rule == "binding", ])
 rb$deviation_f <- factor(ifelse(rb$deviation == "moderate", "Moderate",
                                 "Large"), levels = c("Moderate", "Large"))
-p2 <- ggplot(rb, aes(x = deviation_f, y = type1, fill = method_f)) +
-  geom_hline(data = alpha_lines, aes(yintercept = alpha),
-             linetype = "dashed", colour = "grey30") +
+p2 <- ggplot(rb, aes(x = deviation_f, y = type1 / alpha_nom,
+                     fill = method_f)) +
+  geom_hline(yintercept = 1, linetype = "dashed", colour = "grey30") +
   geom_boxplot(outlier.size = 0.3, width = 0.7, linewidth = 0.3,
                position = position_dodge(width = 0.8)) +
   facet_grid(design_f ~ scenario_f) +
   scale_fill_manual(values = cols[c("Naive", "Proposed")]) +
   labs(x = "Size of the deviations from the planned sample sizes",
-       y = "Type I error rate", fill = NULL) +
+       y = "Type I error rate / nominal level", fill = NULL) +
   theme_article
 save_figure(p2, "figure2_random_type1", width = 10, height = 6.2)
 
 # Figure 3: deviation of the final sample size only, binding futility
-fb <- add_factors(final_dev[final_dev$rule == "binding", ])
-p3 <- ggplot(fb, aes(x = final_n, y = type1, colour = method_f,
+method_lab <- c(naive = "Naive", recalibrated = "Recalibrated",
+                ce = "Conditional error", spending = "Proposed",
+                oracle = "Oracle")
+cols_all <- c(Naive = "#D55E00", Recalibrated = "#CC79A7",
+              "Conditional error" = "#009E73", Proposed = "#0072B2",
+              Oracle = "grey40")
+shapes_all <- c(Naive = 17, Recalibrated = 4, "Conditional error" = 1,
+                Proposed = 15, Oracle = 3)
+fb <- final_dev[final_dev$rule == "binding" & final_dev$method != "oracle", ]
+fb <- add_factors(fb)
+fb$method_f <- factor(unname(method_lab[fb$method]),
+                      levels = c("Naive", "Recalibrated", "Conditional error",
+                                 "Proposed"))
+p3 <- ggplot(fb, aes(x = final_n, y = type1 / alpha_nom, colour = method_f,
                      shape = method_f)) +
-  geom_hline(data = alpha_lines, aes(yintercept = alpha),
-             linetype = "dashed", colour = "grey30") +
+  geom_hline(yintercept = 1, linetype = "dashed", colour = "grey30") +
   geom_vline(data = alpha_lines, aes(xintercept = N), linetype = "dotted",
              colour = "grey50") +
   geom_line() +
   geom_point(size = 1) +
   facet_grid(design_f ~ scenario_f, scales = "free_x") +
-  scale_colour_manual(values = cols[c("Naive", "Proposed")]) +
-  scale_shape_manual(values = c(Naive = 17, Proposed = 15)) +
+  scale_colour_manual(values = cols_all) +
+  scale_shape_manual(values = shapes_all) +
   labs(x = "Actual final sample size (interim analyses as planned)",
-       y = "Type I error rate", colour = NULL, shape = NULL) +
+       y = "Type I error rate / nominal level", colour = NULL,
+       shape = NULL) +
   theme_article
 save_figure(p3, "figure3_final_deviation", width = 10, height = 6.2)
 
-# Figure 4: power relative to the oracle design, moderate deviations
-po <- merge(random[random$rule == "binding" &
-                     random$deviation == "moderate", ],
-            oracle, by = c("id", "schedule"))
-po$diff <- po$power - po$oracle_power
-po <- add_factors(po[!is.na(po$diff), ])
-p4 <- ggplot(po, aes(x = method_f, y = diff, fill = method_f)) +
+# Figure 4: power relative to the oracle design under deviations of the final
+# sample size, for the methods that control the type I error rate
+fo <- final_dev[final_dev$rule == "binding", ]
+orc <- fo[fo$method == "oracle", c("id", "final_n", "power")]
+names(orc)[3] <- "oracle_power"
+fo <- merge(fo[fo$method %in% c("ce", "spending"), ], orc,
+            by = c("id", "final_n"))
+fo$diff <- fo$power - fo$oracle_power
+fo <- add_factors(fo[!is.na(fo$diff), ])
+fo$method_f <- factor(unname(method_lab[fo$method]),
+                      levels = c("Conditional error", "Proposed"))
+p4 <- ggplot(fo, aes(x = final_n, y = diff, colour = method_f,
+                     shape = method_f)) +
   geom_hline(yintercept = 0, linetype = "dashed", colour = "grey30") +
-  geom_boxplot(outlier.size = 0.3, width = 0.6, linewidth = 0.3) +
-  facet_grid(design_f ~ scenario_f) +
-  scale_fill_manual(values = cols[c("Naive", "Proposed")]) +
-  labs(x = NULL, y = "Power minus power of the oracle design", fill = NULL) +
-  theme_article +
-  theme(legend.position = "none")
-save_figure(p4, "figure4_power_oracle", width = 10, height = 6.2)
+  geom_vline(data = alpha_lines, aes(xintercept = N), linetype = "dotted",
+             colour = "grey50") +
+  geom_line() +
+  geom_point(size = 1) +
+  facet_grid(design_f ~ scenario_f, scales = "free_x") +
+  scale_colour_manual(values = cols_all) +
+  scale_shape_manual(values = shapes_all) +
+  labs(x = "Actual final sample size (interim analyses as planned)",
+       y = "Power minus power of the oracle design", colour = NULL,
+       shape = NULL) +
+  theme_article
+save_figure(p4, "figure4_power_final_deviation", width = 10, height = 6.2)
 
 message("Tables written to ", tab_dir)
 message("Figures written to ", fig_dir)

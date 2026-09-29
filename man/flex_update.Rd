@@ -4,7 +4,15 @@
 \alias{flex_update}
 \title{Boundaries at the actual analyses by the implied error spending function}
 \usage{
-flex_update(design, m, final = FALSE, y = NULL, futility = NULL)
+flex_update(
+  design,
+  m,
+  final = FALSE,
+  y = NULL,
+  futility = NULL,
+  spending = NULL,
+  efficacy_floor = TRUE
+)
 }
 \arguments{
 \item{design}{An object of class \code{"flex_design"}.}
@@ -23,6 +31,16 @@ analysis is added.}
 giving the futility boundary actually applied; \code{NA} elements use the
 default. It is required at unplanned interim analyses of a design given
 by its boundary table.}
+
+\item{spending}{An optional data frame with columns \code{t} and
+\code{alpha_cum} defining another spending function by linear
+interpolation, with \code{t} strictly increasing from 0 to 1 and
+\code{alpha_cum} non-decreasing from 0 to at most \code{alpha}. The
+default \code{NULL} uses \code{\link{flex_spending}(design)}.}
+
+\item{efficacy_floor}{A single logical value. With \code{TRUE} (the default)
+the efficacy boundary is never below the smallest count whose posterior
+probability reaches the final cutoff of the design.}
 }
 \value{
 An object of class \code{"flex_bounds"}, a list with elements
@@ -72,6 +90,13 @@ or not the futility boundaries are followed.
 The function is meant to be called at each analysis with all actual sample
 sizes so far; the boundaries at earlier analyses depend only on the earlier
 sample sizes and are therefore reproduced unchanged.
+
+Another spending function can be supplied through \code{spending}, for
+example \code{alpha t^rho}, for comparison. The type I error guarantee holds
+for any non-decreasing spending function that starts at zero and does not
+exceed \code{alpha}, but only the implied spending function recovers the
+planned boundaries. The floor on the efficacy boundary can be removed with
+\code{efficacy_floor = FALSE}, which also keeps the guarantee.
 }
 \examples{
 design <- flex_plan(p0 = 0.2, n = c(10, 15, 20, 25, 30, 35, 40),

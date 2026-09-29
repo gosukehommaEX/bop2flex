@@ -38,6 +38,13 @@
 #' sizes so far; the boundaries at earlier analyses depend only on the earlier
 #' sample sizes and are therefore reproduced unchanged.
 #'
+#' Another spending function can be supplied through \code{spending}, for
+#' example \code{alpha t^rho}, for comparison. The type I error guarantee holds
+#' for any non-decreasing spending function that starts at zero and does not
+#' exceed \code{alpha}, but only the implied spending function recovers the
+#' planned boundaries. The floor on the efficacy boundary can be removed with
+#' \code{efficacy_floor = FALSE}, which also keeps the guarantee.
+#'
 #' @param design An object of class \code{"flex_design"}.
 #' @param m A numeric vector of strictly increasing actual cumulative sample
 #'   sizes up to the current analysis.
@@ -50,6 +57,14 @@
 #'   giving the futility boundary actually applied; \code{NA} elements use the
 #'   default. It is required at unplanned interim analyses of a design given
 #'   by its boundary table.
+#' @param spending An optional data frame with columns \code{t} and
+#'   \code{alpha_cum} defining another spending function by linear
+#'   interpolation, with \code{t} strictly increasing from 0 to 1 and
+#'   \code{alpha_cum} non-decreasing from 0 to at most \code{alpha}. The
+#'   default \code{NULL} uses \code{\link{flex_spending}(design)}.
+#' @param efficacy_floor A single logical value. With \code{TRUE} (the default)
+#'   the efficacy boundary is never below the smallest count whose posterior
+#'   probability reaches the final cutoff of the design.
 #'
 #' @return An object of class \code{"flex_bounds"}, a list with elements
 #'   \code{method} (\code{"spending"}), \code{design}, \code{final} and
@@ -68,10 +83,31 @@
 #' flex_update(design, m = c(12, 16, 19, 25, 31, 37, 39), final = TRUE)
 #'
 #' @export
-flex_update <- function(design, m, final = FALSE, y = NULL, futility = NULL) {
+flex_update <- function(design, m, final = FALSE, y = NULL, futility = NULL,
+                        spending = NULL, efficacy_floor = TRUE) {
   flex_check_design(design)
   m <- flex_check_looks(m, "m")
   flex_check_flag(final, "final")
+  flex_check_flag(efficacy_floor, "efficacy_floor")
+  if (!is.null(spending)) {
+    ok <- is.data.frame(spending) &&
+      all(c("t", "alpha_cum") %in% names(spending)) && nrow(spending) >= 2
+    if (ok) {
+      tt <- spending$t
+      aa <- spending$alpha_cum
+      ok <- is.numeric(tt) && is.numeric(aa) && all(is.finite(tt)) &&
+        all(is.finite(aa)) && abs(tt[1]) < 1e-12 && abs(aa[1]) < 1e-12 &&
+        all(diff(tt) > 0) && all(diff(aa) >= 0) &&
+        abs(tt[length(tt)] - 1) < 1e-12 &&
+        aa[length(aa)] <= design$alpha * (1 + 1e-9)
+    }
+    if (!ok) {
+      stop(paste0("'spending' must be a data frame with columns 't', ",
+                  "strictly increasing from 0 to 1, and 'alpha_cum', ",
+                  "non-decreasing from 0 to at most the alpha of the ",
+                  "design."), call. = FALSE)
+    }
+  }
   num <- length(m)
   if (!is.null(futility)) {
     if (length(futility) != num) {
@@ -101,7 +137,7 @@ flex_update <- function(design, m, final = FALSE, y = NULL, futility = NULL) {
       flex_posterior(design$boundary$efficacy[j], design$n[j], p0, a, b)
     }, numeric(1)))
   }
-  spending <- flex_spending(design)
+  if (is.null(spending)) spending <- flex_spending(design)
   dist <- 1
   prev <- 0L
   spent <- 0
@@ -120,7 +156,11 @@ flex_update <- function(design, m, final = FALSE, y = NULL, futility = NULL) {
     tail <- c(rev(cumsum(rev(dist))), 0)
     ok <- which(spent + tail <= target[k] * (1 + 1e-9))
     post <- flex_posterior(0:m[k], m[k], p0, a, b)
-    e_floor <- flex_efficacy_count(post, final_cut)
+    e_floor <- if (efficacy_floor) {
+      flex_efficacy_count(post, final_cut)
+    } else {
+      0L
+    }
     eff[k] <- max(min(ok) - 1L, e_floor)
     spent <- spent + tail[eff[k] + 1L]
     spent_by_look[k] <- spent

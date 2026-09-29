@@ -1,0 +1,29 @@
+\begin{sidewaystable}
+\centering
+\caption{Boundaries and operating characteristics in a setting based on the TREND trial ($p_0 = 0.41$, $p_1 = 0.56$, planned analyses after 48 and 65 patients, $\alpha = 0.05$)}
+\label{tab:trend}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrrrrrrr}
+\toprule
+ & & \multicolumn{3}{c}{Interim analysis} & \multicolumn{2}{c}{Final analysis} & & \\
+\cmidrule(lr){3-5}\cmidrule(lr){6-7}
+Schedule & Method & Patients & Futility & Efficacy & Patients & Efficacy & Type I error & Power \\
+\midrule
+Planned & Planned & 48 & 21 & 27 & 65 & 34 & 0.049 & 0.776 \\
+\midrule
+$44, 65$ & Planned counts & 44 & 21 & 27 & 65 & 34 & 0.038 & 0.729 \\
+ & Naive & 44 & 19 & 25 & 65 & 34 & 0.051 & 0.776 \\
+ & Proposed & 44 & 19 & 26 & 65 & 34 & 0.045 & 0.767 \\
+\midrule
+$44, 54$ & Planned counts & 44 & 21 & 27 & 54 & 29 & 0.039 & 0.676 \\
+ & Naive & 44 & 19 & 25 & 54 & 29 & 0.046 & 0.698 \\
+ & Proposed & 44 & 19 & 26 & 54 & 29 & 0.041 & 0.688 \\
+\bottomrule
+\end{tabular}
+\par\medskip
+\begin{minipage}{0.95\textwidth}
+\footnotesize
+The planned BOP2-FE design with the power efficacy cutoff was calibrated by the exact grid search ($\lambda = 0.95$, $\gamma = 0.81$, $\eta = 1.3$; type I error rate 0.049 and power 0.776 on the planned schedule). In the TREND trial, 44 of 53 enrolled patients were evaluable at the analysis; the schedules assume 44 evaluable patients at the interim analysis and 65 or 54 at the final analysis. Planned counts: the planned interim boundaries applied unchanged to the actual interim sample size, with the naive final boundary. Naive: the planned probability cutoffs evaluated at the actual sample sizes. Proposed: boundaries from the error spending function implied by the planned design. The trial stops for futility when the number of responses is at most the futility boundary and for efficacy, or rejects the null hypothesis at the final analysis, when it is at least the efficacy boundary. All operating characteristics are exact.
+\end{minipage}
+\end{sidewaystable}

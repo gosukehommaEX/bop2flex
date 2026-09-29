@@ -1,0 +1,49 @@
+\begin{sidewaystable}
+\centering
+\caption{Type I error rate over all schedules within a range of deviations}
+\label{tab:exhaustive}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llllrrrrrrr}
+\toprule
+ & & & & & \multicolumn{3}{c}{Naive} & \multicolumn{3}{c}{Proposed} \\
+\cmidrule(lr){6-8}\cmidrule(lr){9-11}
+Setting & Shifts & Design & Futility & Schedules & Mean & Max & $>\alpha$ (\%) & Mean & Max & $>\alpha$ (\%) \\
+\midrule
+S1 & $\pm 1$, $\pm 2$ & BOP2 & binding & 3645 & 0.086 & 0.118 & 10.0 & 0.082 & 0.100 & 0.0 \\
+ &  & BOP2-FE-1 & binding & 3645 & 0.105 & 0.126 & 76.5 & 0.090 & 0.100 & 0.0 \\
+ &  & BOP2-FE-2 & binding & 3645 & 0.102 & 0.122 & 60.1 & 0.091 & 0.100 & 0.0 \\
+ &  & BOP2-FE-1 & non-binding & 3645 & 0.088 & 0.113 & 21.0 & 0.074 & 0.092 & 0.0 \\
+\midrule
+S2 & $\pm 1$, $\pm 2$ & BOP2 & binding & 3645 & 0.117 & 0.143 & 84.1 & 0.079 & 0.100 & 0.0 \\
+ &  & BOP2-FE-1 & binding & 3645 & 0.105 & 0.125 & 69.7 & 0.085 & 0.100 & 0.0 \\
+ &  & BOP2-FE-2 & binding & 3645 & 0.089 & 0.107 & 4.9 & 0.083 & 0.100 & 0.0 \\
+ &  & BOP2-FE-1 & non-binding & 3645 & 0.103 & 0.125 & 57.5 & 0.086 & 0.100 & 0.0 \\
+\midrule
+S3 & $\pm 1$, $\pm 2$ & BOP2 & binding & 3645 & 0.105 & 0.133 & 68.0 & 0.083 & 0.100 & 0.0 \\
+ &  & BOP2-FE-1 & binding & 3645 & 0.119 & 0.144 & 99.3 & 0.089 & 0.100 & 0.0 \\
+ &  & BOP2-FE-2 & binding & 3645 & 0.110 & 0.134 & 90.5 & 0.088 & 0.100 & 0.0 \\
+ &  & BOP2-FE-1 & non-binding & 3645 & 0.088 & 0.102 & 1.2 & 0.086 & 0.100 & 0.0 \\
+\midrule
+S4 & $\pm 1$, $\pm 2$ & BOP2 & binding & 3645 & 0.087 & 0.119 & 20.0 & 0.078 & 0.097 & 0.0 \\
+ &  & BOP2-FE-1 & binding & 3645 & 0.098 & 0.115 & 42.6 & 0.086 & 0.100 & 0.0 \\
+ &  & BOP2-FE-2 & binding & 3645 & 0.097 & 0.115 & 35.7 & 0.087 & 0.100 & 0.0 \\
+ &  & BOP2-FE-1 & non-binding & 3645 & 0.107 & 0.128 & 70.2 & 0.084 & 0.100 & 0.0 \\
+\midrule
+S5 & $\pm 2$, $\pm 4$ & BOP2 & binding & 5500 & 0.079 & 0.128 & 13.8 & 0.071 & 0.100 & 0.0 \\
+ &  & BOP2-FE-1 & binding & 5500 & 0.098 & 0.130 & 38.5 & 0.086 & 0.100 & 0.0 \\
+ &  & BOP2-FE-2 & binding & 5500 & 0.098 & 0.130 & 38.5 & 0.086 & 0.100 & 0.0 \\
+ &  & BOP2-FE-1 & non-binding & 5500 & 0.107 & 0.142 & 63.6 & 0.070 & 0.100 & 0.0 \\
+\midrule
+S6 & $\pm 2$, $\pm 4$ & BOP2 & binding & 5625 & 0.043 & 0.059 & 16.2 & 0.040 & 0.050 & 0.0 \\
+ &  & BOP2-FE-1 & binding & 5625 & 0.050 & 0.064 & 50.8 & 0.043 & 0.050 & 0.0 \\
+ &  & BOP2-FE-2 & binding & 5625 & 0.051 & 0.066 & 56.0 & 0.043 & 0.050 & 0.0 \\
+ &  & BOP2-FE-1 & non-binding & 5625 & 0.043 & 0.054 & 7.0 & 0.040 & 0.049 & 0.0 \\
+\bottomrule
+\end{tabular}
+\par\medskip
+\begin{minipage}{0.95\textwidth}
+\footnotesize
+All schedules obtained by shifting each planned interim sample size by an integer up to the first shift and the maximum sample size by an integer up to the second shift were evaluated, after merging analyses that coincide. Schedules: number of distinct schedules. Mean and Max are taken over schedules, and $>\alpha$ is the percentage of schedules with a type I error rate above the nominal level. Settings and designs are given in Table~\ref{tab:planned}. All operating characteristics are exact.
+\end{minipage}
+\end{sidewaystable}

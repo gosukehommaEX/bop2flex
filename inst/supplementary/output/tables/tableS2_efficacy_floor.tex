@@ -1,0 +1,49 @@
+\begin{sidewaystable}
+\centering
+\caption{Effect of the floor on the efficacy boundary over the random schedules with moderate deviations}
+\label{tab:floor}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lllrrrrrrrrr}
+\toprule
+ & & & & & & \multicolumn{2}{c}{Type I error, mean} & \multicolumn{2}{c}{Type I error, max} & \multicolumn{2}{c}{Power, mean} \\
+\cmidrule(lr){7-8}\cmidrule(lr){9-10}\cmidrule(lr){11-12}
+Setting & Design & Futility & Changed (\%) & Largest raise & Final boundary 0 & Floor & No floor & Floor & No floor & Floor & No floor \\
+\midrule
+S1 & BOP2 & binding & 11.8 & 12 & 69 & 0.082 & 0.084 & 0.100 & 0.100 & 0.859 & 0.859 \\
+ & BOP2-FE-1 & binding & 0.0 & 1 & 0 & 0.089 & 0.089 & 0.100 & 0.100 & 0.885 & 0.885 \\
+ & BOP2-FE-2 & binding & 2.2 & 1 & 0 & 0.089 & 0.090 & 0.100 & 0.100 & 0.884 & 0.884 \\
+ & BOP2-FE-1 & non-binding & 0.0 & 0 & 0 & 0.075 & 0.075 & 0.096 & 0.096 & 0.865 & 0.865 \\
+\midrule
+S2 & BOP2 & binding & 0.0 & 0 & 0 & 0.079 & 0.079 & 0.100 & 0.100 & 0.862 & 0.862 \\
+ & BOP2-FE-1 & binding & 0.0 & 0 & 0 & 0.086 & 0.086 & 0.100 & 0.100 & 0.860 & 0.860 \\
+ & BOP2-FE-2 & binding & 34.8 & 18 & 149 & 0.079 & 0.087 & 0.098 & 0.100 & 0.853 & 0.861 \\
+ & BOP2-FE-1 & non-binding & 0.0 & 0 & 0 & 0.086 & 0.086 & 0.100 & 0.100 & 0.847 & 0.847 \\
+\midrule
+S3 & BOP2 & binding & 0.0 & 0 & 0 & 0.082 & 0.082 & 0.100 & 0.100 & 0.828 & 0.828 \\
+ & BOP2-FE-1 & binding & 0.0 & 0 & 0 & 0.088 & 0.088 & 0.100 & 0.100 & 0.852 & 0.852 \\
+ & BOP2-FE-2 & binding & 0.0 & 0 & 0 & 0.087 & 0.087 & 0.100 & 0.100 & 0.854 & 0.854 \\
+ & BOP2-FE-1 & non-binding & 0.0 & 0 & 0 & 0.085 & 0.085 & 0.100 & 0.100 & 0.841 & 0.841 \\
+\midrule
+S4 & BOP2 & binding & 0.4 & 1 & 0 & 0.080 & 0.080 & 0.098 & 0.100 & 0.872 & 0.872 \\
+ & BOP2-FE-1 & binding & 0.0 & 0 & 0 & 0.086 & 0.086 & 0.100 & 0.100 & 0.871 & 0.871 \\
+ & BOP2-FE-2 & binding & 2.5 & 1 & 0 & 0.086 & 0.087 & 0.100 & 0.100 & 0.872 & 0.873 \\
+ & BOP2-FE-1 & non-binding & 0.0 & 0 & 0 & 0.082 & 0.082 & 0.100 & 0.100 & 0.858 & 0.858 \\
+\midrule
+S5 & BOP2 & binding & 27.5 & 6 & 537 & 0.071 & 0.077 & 0.100 & 0.100 & 0.866 & 0.868 \\
+ & BOP2-FE-1 & binding & 25.8 & 6 & 502 & 0.086 & 0.088 & 0.100 & 0.100 & 0.872 & 0.872 \\
+ & BOP2-FE-2 & binding & 25.8 & 6 & 502 & 0.086 & 0.088 & 0.100 & 0.100 & 0.872 & 0.872 \\
+ & BOP2-FE-1 & non-binding & 0.0 & 0 & 0 & 0.069 & 0.069 & 0.100 & 0.100 & 0.846 & 0.846 \\
+\midrule
+S6 & BOP2 & binding & 0.1 & 1 & 0 & 0.040 & 0.040 & 0.050 & 0.050 & 0.784 & 0.784 \\
+ & BOP2-FE-1 & binding & 0.0 & 0 & 0 & 0.043 & 0.043 & 0.050 & 0.050 & 0.784 & 0.784 \\
+ & BOP2-FE-2 & binding & 0.0 & 0 & 0 & 0.043 & 0.043 & 0.050 & 0.050 & 0.784 & 0.784 \\
+ & BOP2-FE-1 & non-binding & 0.0 & 0 & 0 & 0.040 & 0.040 & 0.049 & 0.049 & 0.769 & 0.769 \\
+\bottomrule
+\end{tabular}
+\par\medskip
+\begin{minipage}{0.95\textwidth}
+\footnotesize
+The proposed boundaries were computed with and without the floor, which keeps the efficacy boundary at or above the smallest number of responses whose posterior probability reaches the planned final cutoff $\lambda$. Changed: percentage of schedules in which the floor raised at least one efficacy boundary. Largest raise: largest increase of an efficacy boundary, in responses. Final boundary 0: number of schedules in which, without the floor, the null hypothesis would be rejected at the final analysis with no responses. Both versions keep the type I error rate at or below the nominal level. All operating characteristics are exact.
+\end{minipage}
+\end{sidewaystable}

@@ -146,3 +146,60 @@ test_that("flex_update checks its arguments", {
   expect_error(flex_update(fe1, c(10, 5)), "cumulative")
   expect_error(flex_update(fe1, 10, final = NA), "'final'")
 })
+
+test_that("flex_update can remove the efficacy floor", {
+  # Without the floor the final efficacy boundary at 50 patients is 0
+  b <- flex_update(fe1, c(45, 50), final = TRUE, efficacy_floor = FALSE)
+  expect_identical(b$bounds$futility, c(12L, -1L))
+  expect_identical(b$bounds$efficacy, c(14L, 0L))
+  expect_equal(type1(b, fe1), 0.099454192392, tolerance = 1e-10)
+  b <- flex_update(fe1, c(39, 40, 41), final = TRUE, efficacy_floor = FALSE)
+  expect_identical(b$bounds$efficacy, c(12L, 12L, 0L))
+  expect_equal(type1(b, fe1), 0.087505235922, tolerance = 1e-10)
+  sch <- flex_schedules(fe1, n_sim = 50, interim_shift = 3, final_shift = 6,
+                        seed = 11)
+  t1 <- vapply(sch, function(s) {
+    type1(flex_update(fe1, s, final = TRUE, efficacy_floor = FALSE), fe1)
+  }, numeric(1))
+  expect_true(all(t1 <= fe1$alpha * (1 + 1e-9)))
+  expect_error(flex_update(fe1, 10, efficacy_floor = NA), "'efficacy_floor'")
+})
+
+test_that("flex_update accepts another spending function", {
+  # Independent Python values for the spending functions 0.1 t and 0.1 t^2
+  lin <- data.frame(t = c(0, 1), alpha_cum = c(0, 0.1))
+  b <- flex_update(fe1, n, final = TRUE, spending = lin)
+  expect_identical(b$bounds$futility, c(1L, 2L, 3L, 5L, 7L, 8L, 12L))
+  expect_identical(b$bounds$efficacy, c(6L, 7L, 8L, 9L, 11L, 11L, 13L))
+  expect_equal(type1(b, fe1), 0.089813386978, tolerance = 1e-10)
+  b <- flex_update(fe1, c(12, 16, 19, 25, 31, 37, 39), final = TRUE,
+                   spending = lin)
+  expect_identical(b$bounds$efficacy, c(6L, 7L, 8L, 9L, 11L, 12L, 12L))
+  expect_equal(type1(b, fe1), 0.095700542565, tolerance = 1e-10)
+  tt <- seq(0, 1, length.out = 201)
+  quad <- data.frame(t = tt, alpha_cum = 0.1 * tt^2)
+  b <- flex_update(fe1, n, final = TRUE, spending = quad)
+  expect_identical(b$bounds$efficacy, c(7L, 8L, 9L, 10L, 11L, 11L, 12L))
+  expect_equal(type1(b, fe1), 0.085641340041, tolerance = 1e-10)
+  # The implied spending function supplied explicitly gives the default
+  imp <- flex_spending(fe1)
+  expect_identical(flex_update(fe1, n, final = TRUE, spending = imp)$bounds,
+                   flex_update(fe1, n, final = TRUE)$bounds)
+})
+
+test_that("flex_update checks the spending function", {
+  expect_error(flex_update(fe1, 10, spending = data.frame(t = c(0, 0.5),
+                                                          alpha_cum = c(0,
+                                                                        0.1))),
+               "'spending'")
+  expect_error(flex_update(fe1, 10, spending = data.frame(t = c(0, 1),
+                                                          alpha_cum = c(0,
+                                                                        0.2))),
+               "'spending'")
+  expect_error(flex_update(fe1, 10, spending = data.frame(t = c(0, 1),
+                                                          alpha_cum = c(0.01,
+                                                                        0.1))),
+               "'spending'")
+  expect_error(flex_update(fe1, 10, spending = list(t = c(0, 1))),
+               "'spending'")
+})

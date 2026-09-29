@@ -1,5 +1,5 @@
-Finished: 2026-09-29 17:29:47
-Elapsed: 23.8 min
+Finished: 2026-09-29 18:43:20
+Elapsed: 29.4 min
 R version 4.6.0 (2026-04-24 ucrt)
 Platform: x86_64-w64-mingw32/x64
 Running under: Windows 11 x64 (build 26200)
@@ -18,14 +18,15 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] bop2flex_0.1.0 testthat_3.3.2
+[1] bop2flex_0.1.0 testthat_3.3.2 ggplot2_4.0.3 
 
 loaded via a namespace (and not attached):
- [1] compiler_4.6.0    crayon_1.5.3      brio_1.1.5        xml2_1.6.0        rcmdcheck_1.4.0   callr_3.7.6      
- [7] fastmap_1.2.0     R6_2.6.1          commonmark_2.0.0  curl_7.1.0        diffobj_0.3.6     knitr_1.51       
-[13] tibble_3.3.1      desc_1.4.3        rprojroot_2.1.1   pillar_1.11.1     rlang_1.2.0       cachem_1.1.0     
-[19] roxygen2_8.0.0    xfun_0.57         fs_2.1.0          pkgload_1.5.2     otel_0.2.0        memoise_2.0.1    
-[25] cli_3.6.6         withr_3.0.2       magrittr_2.0.5    digest_0.6.39     processx_3.9.0    rstudioapi_0.18.0
-[31] devtools_2.5.2    lifecycle_1.0.5   prettyunits_1.2.0 waldo_0.6.2       vctrs_0.7.3       evaluate_1.0.5   
-[37] glue_1.8.1        xopen_1.0.1       sessioninfo_1.2.3 pkgbuild_1.4.8    purrr_1.2.2       tools_4.6.0      
-[43] usethis_3.2.1     pkgconfig_2.0.3   ellipsis_0.3.3   
+ [1] gtable_0.3.6       dplyr_1.2.1        compiler_4.6.0     brio_1.1.5         tidyselect_1.2.1   xml2_1.6.0        
+ [7] systemfonts_1.3.2  scales_1.4.0       textshaping_1.0.5  fastmap_1.2.0      R6_2.6.1           commonmark_2.0.0  
+[13] labeling_0.4.3     generics_0.1.4     knitr_1.51         tibble_3.3.1       desc_1.4.3         rprojroot_2.1.1   
+[19] pillar_1.11.1      RColorBrewer_1.1-3 rlang_1.2.0        cachem_1.1.0       roxygen2_8.0.0     xfun_0.57         
+[25] fs_2.1.0           S7_0.2.2           otel_0.2.0         pkgload_1.5.2      memoise_2.0.1      cli_3.6.6         
+[31] withr_3.0.2        magrittr_2.0.5     grid_4.6.0         rstudioapi_0.18.0  devtools_2.5.2     lifecycle_1.0.5   
+[37] waldo_0.6.2        vctrs_0.7.3        evaluate_1.0.5     glue_1.8.1         farver_2.1.2       sessioninfo_1.2.3 
+[43] ragg_1.5.2         pkgbuild_1.4.8     purrr_1.2.2        tools_4.6.0        usethis_3.2.1      pkgconfig_2.0.3   
+[49] ellipsis_0.3.3    
