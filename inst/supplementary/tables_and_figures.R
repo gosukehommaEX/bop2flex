@@ -418,8 +418,11 @@ add_factors <- function(df) {
 save_figure <- function(plot, name, width, height) {
   ggsave(file.path(fig_dir, paste0(name, ".pdf")), plot, width = width,
          height = height, units = "in", device = "pdf")
+  # URW fonts: the standard Symbol font used for Greek letters is not embedded
+  # when the EPS files are converted to PDF, whereas its URW version is
   ggsave(file.path(fig_dir, paste0(name, ".eps")), plot, width = width,
-         height = height, units = "in", dpi = 800, device = "eps")
+         height = height, units = "in", dpi = 800, device = "eps",
+         family = "URWHelvetica")
 }
 
 # Figure S1: spending functions
