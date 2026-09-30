@@ -22,7 +22,7 @@ design <- flex_design(p0 = 0.2, p1 = 0.4, n = c(10, 15, 20, 25, 30, 35, 40),
 design
 ```
 
-The selected tuning parameters are `lambda = 0.87`, `gamma = 0.94` and `eta = 2.4`. The trial stops for futility when the number of responses is at most 1, 2, 3, 5, 7 and 8 at the interim analyses, and stops for efficacy when it is at least 6, 8, 9, 9, 10 and 11. At the final analysis the null hypothesis is rejected with at least 12 responses. These are the BOP2-FE-1 boundaries of Xu et al. (2025, Table 1). The exact type I error rate is 0.0988 and the power is 0.890.
+The selected tuning parameters are `lambda = 0.87`, `gamma = 0.94` and `eta = 2.4`. The trial stops for futility when the number of responses is at most 1, 2, 3, 5, 7 and 8 at the interim analyses, and stops for efficacy when it is at least 6, 8, 9, 9, 10 and 11. At the final analysis the null hypothesis is rejected with at least 12 responses. These are the BOP2-FE-1 boundaries of Xu et al. (2025, Table 1). The exact type I error rate is 0.0988 and the power is 0.890. Seven other grid points give the same boundaries, for example `lambda = 0.88`, `gamma = 1` and `eta = 2.3`; they are listed in `design$calibration$equivalent`. They define the same planned design but different probability cutoffs at other sample sizes, so the tuning parameters should be stated together with the boundaries.
 
 Suppose the analyses actually take place after 12, 16, 19, 25, 31, 37 and 39 patients. `flex_update()` is called at each analysis with the sample sizes so far.
 

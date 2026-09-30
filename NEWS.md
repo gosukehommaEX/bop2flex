@@ -2,6 +2,7 @@
 
 * First version.
 * `flex_design()` calibrates the BOP2 design of Zhou et al. (2017) and the BOP2-FE design of Xu et al. (2025), with the power or the O'Brien-Fleming type efficacy cutoff and binding or non-binding futility, using exact operating characteristics.
+* `flex_design()` also returns, in `calibration$equivalent`, every grid point that gives the selected boundaries. The reported tuning parameters are the first of them in grid order.
 * `flex_plan()` specifies a planned design by its tuning parameters or by its boundaries.
 * `flex_boundary()`, `flex_oc()` and `flex_posterior()` compute boundaries, exact operating characteristics and posterior probabilities.
 * `flex_spending()` and `flex_update()` compute boundaries at actual analyses from the error spending function implied by the planned design, with a floor on the efficacy boundary at the planned final posterior cutoff.

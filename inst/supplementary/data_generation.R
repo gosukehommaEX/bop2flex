@@ -17,6 +17,10 @@
 #   D. All interim analyses shifted by the same number of patients
 #   E. A setting based on a published trial (TREND; Zhang et al. 2025) in
 #      which fewer patients than enrolled were evaluable
+#   F. Grid points that give the same planned boundaries: the analyses of the
+#      main article and of B and D repeated with the grid point of the
+#      largest lambda instead of the reported one, and the grid points of the
+#      TREND setting
 
 if (!exists("flex_design", mode = "function")) library(bop2flex)
 
@@ -317,6 +321,321 @@ for (r in seq_len(nrow(tr_res))) {
                x[[v]], paste("TREND setting:", v))
   }
 }
+
+# F. Grid points that give the same planned boundaries
+# flex_design() reports the first grid point in grid order (the smallest
+# lambda, then the smallest gamma and eta) among those that give the selected
+# boundaries. The grid point with the largest lambda (then the smallest gamma
+# and eta) defines the same planned design but different probability cutoffs
+# at other sample sizes. It changes the naive boundaries and, through the
+# floor and the futility cutoff, the proposed ones. When it coincides with the
+# reported grid point, the results of the main article and of B and D are
+# reused.
+message("F. Equivalent grid points (", elapsed(), ")")
+main_final <- readRDS(file.path(main_dir, "final_deviation.rds"))
+main_random <- readRDS(file.path(main_dir, "random_results.rds"))
+main_oracle <- readRDS(file.path(main_dir, "oracle_results.rds"))
+designs <- pl$designs
+tol_power <- 1e-9
+final_range <- 6
+example_id <- "S1_BOP2-FE-1_binding"
+example_schedule <- c(12, 16, 19, 25, 31, 37, 39)
+
+# Summaries of one design from flex_compare() results for the exhaustive
+# schedules (exh), the final sample sizes (fin, with column final_n), the
+# common interim shifts (sh) and the random schedules (rnd, with columns
+# deviation and schedule), from the conditional error rule (ce) and from the
+# oracle power and recalibrated type I error rate (orc, by schedule)
+sens_summary <- function(d, exh, fin, sh, rnd, orc, ce) {
+  out <- list()
+  x <- exh[exh$method == "naive", ]
+  out$exhaustive.n <- nrow(x)
+  out$exhaustive.naive.n_exceed <- sum(x$exceeds_alpha)
+  out$exhaustive.naive.exceed_pct <- 100 * mean(x$exceeds_alpha)
+  out$exhaustive.naive.type1_max <- max(x$type1)
+  out$exhaustive.proposed.n_exceed <-
+    sum(exh$exceeds_alpha[exh$method == "spending"])
+  x <- fin[fin$method == "naive", ]
+  out$final.n <- nrow(x)
+  out$final.naive.n_exceed <- sum(x$exceeds_alpha)
+  out$final.naive.type1_max <- max(x$type1)
+  pr <- fin[fin$method == "spending", ]
+  out$final.proposed.n_exceed <- sum(pr$exceeds_alpha)
+  pr <- pr[pr$final_n != d$N, c("final_n", "power")]
+  pc <- merge(pr, ce[ce$final_n != d$N, c("final_n", "power")],
+              by = "final_n", suffixes = c("_proposed", "_ce"))
+  dd <- pc$power_proposed - pc$power_ce
+  out$ce_vs_proposed.n <- nrow(pc)
+  out$ce_vs_proposed.n_higher <- sum(dd > tol_power)
+  out$ce_vs_proposed.n_equal <- sum(abs(dd) <= tol_power)
+  out$ce_vs_proposed.n_lower <- sum(dd < -tol_power)
+  out$ce_vs_proposed.diff_min <- min(dd)
+  out$ce_vs_proposed.diff_max <- max(dd)
+  x <- sh[sh$method == "naive", ]
+  out$shift.n <- nrow(x)
+  out$shift.naive.n_exceed <- sum(x$exceeds_alpha)
+  out$shift.proposed.n_exceed <- sum(sh$exceeds_alpha[sh$method == "spending"])
+  for (dev in c("moderate", "large")) {
+    x <- rnd[rnd$deviation == dev & rnd$method == "naive", ]
+    y <- rnd[rnd$deviation == dev & rnd$method == "spending", ]
+    key <- paste0("random.", dev)
+    out[[paste0(key, ".naive.type1_mean")]] <- mean(x$type1)
+    out[[paste0(key, ".naive.type1_max")]] <- max(x$type1)
+    out[[paste0(key, ".naive.exceed_pct")]] <- 100 * mean(x$exceeds_alpha)
+    out[[paste0(key, ".proposed.type1_mean")]] <- mean(y$type1)
+    out[[paste0(key, ".proposed.type1_max")]] <- max(y$type1)
+    out[[paste0(key, ".proposed.n_exceed")]] <- sum(y$exceeds_alpha)
+    out[[paste0(key, ".proposed.power_mean")]] <- mean(y$power)
+  }
+  y <- rnd[rnd$deviation == "moderate" & rnd$method == "spending" &
+             rnd$schedule <= max(orc$schedule), c("schedule", "power")]
+  po <- merge(y, orc, by = "schedule")
+  ok <- !is.na(po$oracle_power)
+  diff <- po$power[ok] - po$oracle_power[ok]
+  out$oracle.proposed.n <- sum(ok)
+  out$oracle.proposed.diff_mean <- mean(diff)
+  out$oracle.proposed.diff_min <- min(diff)
+  out$oracle.proposed.diff_max <- max(diff)
+  ok <- !is.na(orc$recal_type1)
+  out$recalibrated.type1_max <- max(orc$recal_type1[ok])
+  out$recalibrated.exceed_pct <-
+    100 * mean(orc$recal_type1[ok] > d$alpha * (1 + 1e-9))
+  out
+}
+
+sens <- list()
+for (i in seq_len(nrow(config))) {
+  id <- config$id[i]
+  d <- planned[[i]]
+  dg <- designs[config$d[i], ]
+  cal <- flex_design(p0 = d$p0, p1 = d$p1, n = d$n, alpha = d$alpha,
+                     type = dg$type, method = dg$method,
+                     binding = config$binding[i])
+  if (!isTRUE(all.equal(cal$boundary, d$boundary))) {
+    stop("The calibration of ", id, " does not reproduce the planned design.")
+  }
+  eq <- cal$calibration$equivalent
+  top <- eq[eq$lambda == max(eq$lambda), ][1, ]
+  dl <- flex_plan(p0 = d$p0, n = d$n, alpha = d$alpha, lambda = top$lambda,
+                  gamma = top$gamma,
+                  eta = if (is.na(top$eta)) NULL else top$eta,
+                  type = dg$type, method = dg$method, p1 = d$p1,
+                  binding = config$binding[i])
+  if (!isTRUE(all.equal(dl$boundary, d$boundary))) {
+    stop("The largest lambda of ", id, " does not give the planned design.")
+  }
+  same <- isTRUE(all.equal(c(top$lambda, top$gamma), c(d$lambda, d$gamma))) &&
+    (is.na(top$eta) || isTRUE(all.equal(top$eta, d$eta)))
+  ce <- main_final[main_final$id == id & main_final$method == "ce", ]
+  or_i <- main_oracle[main_oracle$id == id, ]
+  if (same) {
+    exh <- exh_res[exh_res$id == id, ]
+    fin <- main_final[main_final$id == id &
+                        main_final$method %in% c("naive", "spending"), ]
+    sh <- shift_res[shift_res$id == id, ]
+    rnd <- main_random[main_random$id == id, ]
+    orc <- or_i[, c("schedule", "oracle_power", "recal_type1")]
+  } else {
+    ex <- exhaustive[exhaustive$scenario == config$scenario[i], ]
+    exh <- flex_compare(dl, enum_schedules(d$n, ex$interim_shift,
+                                           ex$final_shift))
+    num_looks <- length(d$n)
+    finals <- seq(max(d$n[num_looks - 1] + 1L, d$N - final_range),
+                  d$N + final_range)
+    fin <- flex_compare(dl, lapply(finals, function(f) {
+      c(d$n[-num_looks], f)
+    }))
+    fin$final_n <- finals[fin$schedule]
+    sch_s <- lapply(interim_shifts, function(k) {
+      c(d$n[-num_looks] + k, d$N)
+    })
+    valid <- vapply(sch_s, function(s) all(s >= 1) && all(diff(s) > 0),
+                    logical(1))
+    sh <- flex_compare(dl, sch_s[valid])
+    rnd <- do.call(rbind, lapply(c("moderate", "large"), function(dev) {
+      r <- flex_compare(dl, schedules[[paste(config$scenario[i], dev,
+                                             sep = "_")]])
+      r$deviation <- dev
+      r
+    }))
+    sch_m <- schedules[[paste(config$scenario[i], "moderate", sep = "_")]]
+    recal <- vapply(or_i$schedule, function(j) {
+      fin_j <- or_i$oracle_final[or_i$schedule == j]
+      if (is.na(fin_j)) return(NA_real_)
+      s <- sch_m[[j]]
+      nv <- flex_naive(dl, s, final = TRUE)$bounds
+      k <- nrow(nv)
+      eff <- nv$efficacy
+      fut <- nv$futility
+      eff[k] <- fin_j
+      fut[k] <- eff[k] - 1L
+      flex_oc(s, fut, eff, d$p0, binding = d$binding)$reject
+    }, numeric(1))
+    orc <- data.frame(schedule = or_i$schedule,
+                      oracle_power = or_i$oracle_power, recal_type1 = recal)
+  }
+  sm <- sens_summary(dl, exh, fin, sh, rnd, orc, ce)
+  if (id == example_id) {
+    nv <- flex_naive(dl, example_schedule, final = TRUE)$bounds
+    sm$example.naive.type1 <- flex_oc(nv$m, nv$futility, nv$efficacy, d$p0,
+                                      binding = d$binding)$reject
+    sm$example.naive.efficacy_final <- nv$efficacy[nrow(nv)]
+  }
+  sens[[i]] <- data.frame(
+    id = id, n_points = nrow(eq), n_lambda = length(unique(eq$lambda)),
+    lambda_min = min(eq$lambda), lambda = top$lambda, gamma = top$gamma,
+    eta = top$eta, same = same, sm, check.names = FALSE,
+    stringsAsFactors = FALSE)
+  message("  ", id, if (same) " (reused)" else "", " done (", elapsed(), ")")
+}
+sens_cols <- unique(unlist(lapply(sens, names)))
+sens <- do.call(rbind, lapply(sens, function(x) {
+  x[setdiff(sens_cols, names(x))] <- NA_real_
+  x[sens_cols]
+}))
+rownames(sens) <- NULL
+for (r in seq_len(nrow(sens))) {
+  for (v in setdiff(sens_cols, "id")) {
+    if (is.na(sens[[v]][r]) && v != "eta") next
+    add_number(paste("sensitivity", sens$id[r], v, sep = "."), sens[[v]][r],
+               paste("Grid point of the largest lambda:", v))
+  }
+}
+bind <- grepl("_binding$", sens$id)
+add_number("overall.sensitivity.n_multi_lambda", sum(sens$n_lambda > 1),
+           "Designs whose equivalent grid points contain several lambdas")
+add_number("overall.sensitivity.n_designs", nrow(sens),
+           "Designs in the analysis of equivalent grid points")
+for (v in c("exhaustive.n", "exhaustive.naive.n_exceed",
+            "exhaustive.proposed.n_exceed", "final.n",
+            "final.naive.n_exceed", "final.proposed.n_exceed",
+            "shift.proposed.n_exceed", "random.moderate.proposed.n_exceed",
+            "random.large.proposed.n_exceed")) {
+  add_number(paste0("overall.sensitivity.", v), sum(sens[[v]]),
+             paste("Grid point of the largest lambda, all designs:", v))
+}
+add_number("overall.sensitivity.shift.binding.n", sum(sens$shift.n[bind]),
+           "Grid point of the largest lambda: interim shifts, binding")
+add_number("overall.sensitivity.shift.binding.naive.n_exceed",
+           sum(sens$shift.naive.n_exceed[bind]),
+           "Grid point of the largest lambda: interim shifts above alpha")
+add_number("overall.sensitivity.exhaustive.naive.type1_max",
+           max(sens$exhaustive.naive.type1_max),
+           "Grid point of the largest lambda: largest naive type I error")
+add_number("overall.sensitivity.final.naive.type1_max",
+           max(sens$final.naive.type1_max),
+           "Grid point of the largest lambda: largest naive type I error")
+for (dev in c("moderate", "large")) {
+  key <- paste0("random.", dev)
+  pct <- sens[[paste0(key, ".naive.exceed_pct")]]
+  add_number(paste0("overall.sensitivity.", key, ".naive.exceed_pct_min"),
+             min(pct), "Smallest percentage of schedules above alpha, naive")
+  add_number(paste0("overall.sensitivity.", key, ".naive.exceed_pct_max"),
+             max(pct), "Largest percentage of schedules above alpha, naive")
+  add_number(paste0("overall.sensitivity.", key, ".naive.n_above_half"),
+             sum(pct > 50), "Designs with more than half above alpha, naive")
+  add_number(paste0("overall.sensitivity.", key, ".naive.type1_max"),
+             max(sens[[paste0(key, ".naive.type1_max")]]),
+             "Largest naive type I error rate over designs")
+  add_number(paste0("overall.sensitivity.", key, ".proposed.type1_max_ratio"),
+             max(sens[[paste0(key, ".proposed.type1_max")]] /
+                   vapply(planned, function(x) x$alpha, numeric(1))),
+             "Largest proposed type I error rate divided by alpha")
+}
+for (grp in c("all", "binding")) {
+  sel <- if (grp == "all") rep(TRUE, nrow(sens)) else bind
+  add_number(paste0("overall.sensitivity.oracle.", grp, ".diff_mean_min"),
+             min(sens$oracle.proposed.diff_mean[sel]),
+             "Smallest mean power difference, proposed minus oracle")
+  add_number(paste0("overall.sensitivity.oracle.", grp, ".diff_mean_max"),
+             max(sens$oracle.proposed.diff_mean[sel]),
+             "Largest mean power difference, proposed minus oracle")
+}
+add_number("overall.sensitivity.recalibrated.binding.type1_max",
+           max(sens$recalibrated.type1_max[bind]),
+           "Largest type I error rate of the recalibrated final boundary")
+add_number("overall.sensitivity.recalibrated.binding.exceed_pct_min",
+           min(sens$recalibrated.exceed_pct[bind]),
+           "Smallest percentage above alpha, recalibrated final boundary")
+add_number("overall.sensitivity.recalibrated.binding.exceed_pct_max",
+           max(sens$recalibrated.exceed_pct[bind]),
+           "Largest percentage above alpha, recalibrated final boundary")
+for (dgn in designs$design) {
+  x <- sens[bind & config$design == dgn, ]
+  key <- paste("overall.sensitivity.ce_vs_proposed", dgn, sep = ".")
+  for (v in c("n", "n_higher", "n_equal", "n_lower")) {
+    add_number(paste(key, v, sep = "."), sum(x[[paste0("ce_vs_proposed.", v)]]),
+               "Grid point of the largest lambda: proposed against CE")
+  }
+  add_number(paste0(key, ".diff_min"), min(x$ce_vs_proposed.diff_min),
+             "Smallest power difference, proposed minus conditional error")
+  add_number(paste0(key, ".diff_max"), max(x$ce_vs_proposed.diff_max),
+             "Largest power difference, proposed minus conditional error")
+}
+
+# Grid points of the TREND setting
+tr_eq <- tr_design$calibration$equivalent
+tr_eq_res <- do.call(rbind, lapply(seq_len(nrow(tr_eq)), function(r) {
+  x <- flex_plan(p0 = trend$p0, n = trend$n, alpha = trend$alpha,
+                 lambda = tr_eq$lambda[r], gamma = tr_eq$gamma[r],
+                 eta = tr_eq$eta[r], p1 = trend$p1)
+  if (!isTRUE(all.equal(x$boundary, tr_design$boundary))) {
+    stop("An equivalent grid point of the TREND setting differs.")
+  }
+  out <- data.frame(lambda = tr_eq$lambda[r], gamma = tr_eq$gamma[r],
+                    eta = tr_eq$eta[r])
+  for (s in trend$schedules) {
+    lab <- paste(s, collapse = "_")
+    nv <- flex_naive(x, s, final = TRUE)$bounds
+    pr <- flex_update(x, s, final = TRUE)$bounds
+    out[[paste0("naive_futility_", lab)]] <- nv$futility[1]
+    out[[paste0("naive_efficacy_", lab)]] <- nv$efficacy[1]
+    out[[paste0("naive_type1_", lab)]] <-
+      flex_oc(nv$m, nv$futility, nv$efficacy, trend$p0)$reject
+    out[[paste0("proposed_futility_", lab)]] <- pr$futility[1]
+    out[[paste0("proposed_efficacy_", lab)]] <- pr$efficacy[1]
+  }
+  out
+}))
+add_number("trend.equivalent.n_points", nrow(tr_eq_res),
+           "TREND setting: grid points giving the planned boundaries")
+add_number("trend.equivalent.n_lambda", length(unique(tr_eq_res$lambda)),
+           "TREND setting: distinct lambdas among these grid points")
+prop_key <- do.call(paste, tr_eq_res[grepl("^proposed_", names(tr_eq_res))])
+add_number("trend.equivalent.n_proposed_distinct", length(unique(prop_key)),
+           "TREND setting: distinct proposed interim boundaries")
+for (s in trend$schedules) {
+  lab <- paste(s, collapse = "_")
+  add_number(paste0("trend.equivalent.", lab, ".n_naive_exceed"),
+             sum(tr_eq_res[[paste0("naive_type1_", lab)]] >
+                   trend$alpha * (1 + 1e-9)),
+             "TREND setting: grid points whose naive boundaries exceed alpha")
+}
+same_lg <- abs(tr_eq_res$lambda - tr_design$lambda) < 1e-9 &
+  abs(tr_eq_res$gamma - tr_design$gamma) < 1e-9
+ok_65 <- tr_eq_res$naive_type1_44_65 <= trend$alpha * (1 + 1e-9)
+eta_ok <- min(tr_eq_res$eta[same_lg & ok_65])
+add_number("trend.equivalent.same_lambda_gamma.eta_min_ok", eta_ok,
+           paste("TREND setting: smallest eta with the reported lambda and",
+                 "gamma whose naive boundaries do not exceed alpha"))
+add_number("trend.equivalent.same_lambda_gamma.eta_max",
+           max(tr_eq_res$eta[same_lg]),
+           "TREND setting: largest eta with the reported lambda and gamma")
+add_number("trend.equivalent.same_lambda_gamma.all_ok_above",
+           all(ok_65[same_lg & tr_eq_res$eta >= eta_ok - 1e-9]),
+           "TREND setting: all larger eta keep the naive type I error")
+r_ok <- which(same_lg & abs(tr_eq_res$eta - eta_ok) < 1e-9)
+for (s in trend$schedules) {
+  lab <- paste(s, collapse = "_")
+  for (v in c("naive_futility_", "naive_efficacy_", "naive_type1_")) {
+    add_number(paste0("trend.equivalent.eta_min_ok.", lab, ".",
+                      sub("_$", "", v)),
+               tr_eq_res[[paste0(v, lab)]][r_ok],
+               "TREND setting: naive boundaries at the smallest such eta")
+  }
+}
+saveRDS(list(summary = sens, trend = tr_eq_res),
+        file.path(out_dir, "equivalent_grid_points.rds"))
 
 numbers <- do.call(rbind, numbers)
 utils::write.csv(numbers, file.path(out_dir, "numbers.csv"),

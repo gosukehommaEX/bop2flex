@@ -54,8 +54,11 @@ used only for the BOP2-FE design with \code{method = "power"}.}
 An object of class \code{"flex_design"}; see
 \code{\link{flex_plan}}. It also contains the element
 \code{calibration}, a list with the grids, the number of distinct
-boundary sets evaluated and the number meeting the type I error
-constraint.
+boundary sets evaluated, the number meeting the type I error
+constraint, and \code{equivalent}, a data frame with columns
+\code{lambda}, \code{gamma} and \code{eta} (\code{NA} when not used)
+listing, in grid order, every grid point that gives the selected
+boundaries. Its first row holds the reported tuning parameters.
 }
 \description{
 Chooses the tuning parameters of the BOP2 design (Zhou et al. 2017) or the
@@ -69,9 +72,14 @@ whose exact type I error rate is at most \code{alpha}, the one with the
 largest power is chosen, with ties broken by the smaller expected sample
 size under the null hypothesis and then by the order of the grids. The
 reported tuning parameters are the first values in grid order that produce
-the chosen boundaries. This follows the procedure of Zhou et al. (2017,
-Section 2.3) and Xu et al. (2025, Section 2.3), with the operating
-characteristics computed exactly rather than by simulation. The default
+the chosen boundaries, that is, the smallest \code{lambda}, then the
+smallest \code{gamma} and \code{eta}. Other grid points often give the
+same boundaries on the planned schedule; they define the same planned
+design but different probability cutoffs at other sample sizes, and are
+listed in the element \code{calibration$equivalent}. This follows the
+procedure of Zhou et al. (2017, Section 2.3) and Xu et al. (2025, Section
+2.3), with the operating characteristics computed exactly rather than by
+simulation. The default
 grids cover the ranges of Xu et al. (2025) in steps of 0.01 for
 \code{lambda} (0 to 1) and \code{gamma} (0.01 to 1) and 0.1 for \code{eta}
 (0.1 to 3).

@@ -62,6 +62,42 @@ test_that("flex_design handles another setting", {
   expect_equal(d$oc$power, 0.906442026467, tolerance = 1e-10)
 })
 
+test_that("flex_design lists the grid points giving the same boundaries", {
+  # Expected sizes and extreme members: an independent Python implementation
+  # written from the article only, and a translation of this package.
+  d <- flex_design(p0 = 0.2, p1 = 0.4, n = n)
+  eq <- d$calibration$equivalent
+  expect_identical(nrow(eq), 8L)
+  expect_equal(unlist(eq[1, ]), c(lambda = 0.87, gamma = 0.94, eta = 2.4),
+               tolerance = 1e-12)
+  expect_equal(range(eq$lambda), c(0.87, 0.88), tolerance = 1e-12)
+  top <- eq[eq$lambda == max(eq$lambda), ]
+  expect_equal(unlist(top[1, ]), c(lambda = 0.88, gamma = 1, eta = 2.3),
+               tolerance = 1e-12)
+  for (r in seq_len(nrow(eq))) {
+    x <- flex_plan(p0 = 0.2, n = n, alpha = 0.1, lambda = eq$lambda[r],
+                   gamma = eq$gamma[r], eta = eq$eta[r])
+    expect_identical(x$boundary, d$boundary)
+  }
+  b <- flex_design(p0 = 0.2, p1 = 0.4, n = n, type = "BOP2")
+  eb <- b$calibration$equivalent
+  expect_identical(nrow(eb), 12L)
+  expect_equal(unique(eb$lambda), c(0.84, 0.85), tolerance = 1e-12)
+  expect_true(all(is.na(eb$eta)))
+  top_b <- eb[eb$lambda == max(eb$lambda), ]
+  expect_equal(unlist(top_b[1, c("lambda", "gamma")]),
+               c(lambda = 0.85, gamma = 0.65), tolerance = 1e-12)
+})
+
+test_that("flex_design lists equivalent grid points for the OF design", {
+  skip_on_cran()
+  d <- flex_design(p0 = 0.2, p1 = 0.4, n = n, method = "OF")
+  eq <- d$calibration$equivalent
+  expect_identical(nrow(eq), 5L)
+  expect_equal(unique(eq$lambda), 0.88, tolerance = 1e-12)
+  expect_equal(eq$gamma[1], 0.95, tolerance = 1e-12)
+})
+
 test_that("flex_design checks its arguments", {
   expect_error(flex_design(p0 = 0.2, p1 = 0.1, n = n), "'p1'")
   expect_error(flex_design(p0 = 0.2, p1 = 0.4, n = n, gamma_grid = 0),

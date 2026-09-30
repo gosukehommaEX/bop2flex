@@ -1,0 +1,37 @@
+\begin{sidewaystable}
+\centering
+\caption{Designs whose planned boundaries are given by grid points with different values of $\lambda$: results with the reported grid point and with the grid point of the largest $\lambda$}
+\label{tab:equivalent}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llllllrrrrrrrrrr}
+\toprule
+ & & & & & & \multicolumn{2}{c}{Exhaustive, naive} & \multicolumn{2}{c}{Final, naive} & \multicolumn{2}{c}{Random, naive} & \multicolumn{2}{c}{Power, proposed} & \multicolumn{2}{c}{$-$ oracle$^{a}$} \\
+\cmidrule(lr){7-8}\cmidrule(lr){9-10}\cmidrule(lr){11-12}\cmidrule(lr){13-14}\cmidrule(lr){15-16}
+Setting & Design & Futility & Points & $\lambda$ & Largest $\lambda$ & Reported & Largest & Reported & Largest & Reported & Largest & Reported & Largest & Reported & Largest \\
+\midrule
+S1 & BOP2 & binding & 12 & 0.84--0.85 & (0.85, 0.65, --) & 10.0 & 10.0 & 1 & 1 & 13.9 & 13.9 & 0.859 & 0.859 & -0.035 & -0.035 \\
+ & BOP2-FE-1 & binding & 8 & 0.87--0.88 & (0.88, 1.00, 2.3) & 76.5 & 57.8 & 9 & 7 & 57.4 & 40.7 & 0.885 & 0.885 & -0.010 & -0.010 \\
+\midrule
+S2 & BOP2-FE-1 & binding & 29 & 0.87--0.90 & (0.90, 0.93, 2.4) & 69.7 & 33.1 & 3 & 0 & 82.9 & 36.7 & 0.860 & 0.858 & -0.009 & -0.010 \\
+\midrule
+S3 & BOP2 & binding & 149 & 0.83--0.89 & (0.89, 0.68, --) & 68.0 & 0.8 & 9 & 0 & 80.2 & 1.4 & 0.828 & 0.841 & -0.035 & -0.025 \\
+ & BOP2-FE-1 & binding & 118 & 0.90--0.94 & (0.94, 0.98, 1.1) & 99.3 & 7.8 & 8 & 0 & 97.2 & 4.2 & 0.852 & 0.835 & -0.013 & -0.030 \\
+ & BOP2-FE-2 & binding & 11 & 0.90--0.91 & (0.91, 0.96, --) & 90.5 & 34.0 & 8 & 6 & 85.2 & 35.8 & 0.854 & 0.853 & -0.005 & -0.005 \\
+\midrule
+S4 & BOP2 & binding & 11 & 0.90--0.91 & (0.91, 0.97, --) & 20.0 & 0.0 & 2 & 0 & 18.6 & 0.0 & 0.872 & 0.872 & -0.010 & -0.010 \\
+\midrule
+S5 & BOP2 & binding & 227 & 0.84--0.93 & (0.93, 0.96, --) & 13.8 & 0.0 & 4 & 0 & 13.9 & 0.0 & 0.866 & 0.845 & -0.023 & -0.045 \\
+ & BOP2-FE-1 & binding & 938 & 0.84--0.88 & (0.88, 0.74, 1.4) & 38.5 & 8.5 & 10 & 7 & 38.2 & 8.8 & 0.872 & 0.864 & -0.023 & -0.031 \\
+ & BOP2-FE-2 & binding & 90 & 0.84--0.86 & (0.86, 0.72, --) & 38.5 & 18.7 & 10 & 9 & 38.2 & 18.6 & 0.872 & 0.871 & -0.017 & -0.017 \\
+ & BOP2-FE-1 & non-binding & 1061 & 0.87--0.93 & (0.93, 0.96, 0.6) & 63.6 & 1.4 & 6 & 0 & 64.8 & 1.1 & 0.846 & 0.856 & -0.031 & -0.020 \\
+\midrule
+S6 & BOP2 & binding & 82 & 0.94--0.96 & (0.96, 0.79, --) & 16.2 & 0.0 & 4 & 0 & 15.8 & 0.0 & 0.784 & 0.760 & -0.021 & -0.042 \\
+\bottomrule
+\end{tabular}
+\par\medskip
+\begin{minipage}{0.95\textwidth}
+\footnotesize
+Points: number of grid points of Section 3.1 that give the planned boundaries of Table~\ref{tab:planned}; $\lambda$: range of $\lambda$ among them. Largest $\lambda$: the grid point $(\lambda, \gamma, \eta)$ with the largest $\lambda$, then the smallest $\gamma$ and $\eta$, which gives the same planned design. Reported: the grid point of Table~\ref{tab:planned}, the first in grid order. The other 12 designs have a single $\lambda$ among these grid points, and their grid point of the largest $\lambda$ is the reported one. Exhaustive: percentage of the schedules of Table~\ref{tab:exhaustive} with a type I error rate above $\alpha$. Final: number of final sample sizes from $N - 6$ to $N + 6$, above the last interim sample size, with a type I error rate above $\alpha$ when the interim analyses follow the plan. Random: percentage of the 2000 random schedules with moderate deviations with a type I error rate above $\alpha$. Power: mean over these schedules. $^{a}$Mean difference in power between the proposed boundaries and the design calibrated on the actual schedule, over the first 100 schedules. With either grid point, the proposed boundaries kept the type I error rate at or below $\alpha$ on every schedule. All operating characteristics are exact.
+\end{minipage}
+\end{sidewaystable}

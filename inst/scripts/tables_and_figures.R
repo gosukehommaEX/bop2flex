@@ -130,11 +130,15 @@ table1 <- c(
     "planned schedule. $-$ oracle is the mean difference in power between",
     "the proposed boundaries and the design calibrated on the actual",
     "schedule as if it had been known in advance. $^{a}$Over the first %d",
-    "schedules. All operating characteristics are exact."),
+    "schedules; with %d schedules, the standard error of a percentage is at",
+    "most %s percentage points. Maxima of the proposed boundaries printed as",
+    "the nominal level do not exceed it before rounding. All operating",
+    "characteristics are exact."),
     num("settings.moderate.interim_shift"),
     num("settings.moderate.interim_shift"),
     num("settings.moderate.final_shift"),
-    num("settings.moderate.final_shift"), n_oracle),
+    num("settings.moderate.final_shift"), n_oracle, n_oracle,
+    format(100 * sqrt(0.25 / n_oracle))),
   "\\end{minipage}",
   "\\end{sidewaystable}"
 )
@@ -142,17 +146,25 @@ writeLines(table1, file.path(tab_dir, "table1_random_deviations.tex"))
 
 # Common settings of the figures
 cols <- c(Planned = "black", Naive = "#D55E00", Proposed = "#0072B2")
-theme_article <- theme_bw(base_size = 9) +
-  theme(legend.position = "bottom", panel.grid.minor = element_blank(),
-        strip.text = element_text(size = 7),
-        strip.background = element_rect(fill = "grey92"))
+# The figures are reduced to the text width, so the font sizes grow with the
+# width of the figure: base 10 for a width of 7 in and 12 for 10 in
+theme_article <- function(base) {
+  theme_bw(base_size = base) +
+    theme(legend.position = "bottom", panel.grid.minor = element_blank(),
+          strip.text = element_text(size = base - 2),
+          strip.background = element_rect(fill = "grey92"))
+}
 scen_n <- vapply(scenarios$looks, function(x) max(parse_looks(x)),
                  integer(1), USE.NAMES = FALSE)
+# Strip labels in plotmath, parsed by label_parsed; numbers are quoted so
+# that they are printed as given
 scen_lab <- stats::setNames(
-  sprintf("%s: p0 = %.2f, p1 = %.2f\nN = %d, alpha = %.2f",
-          scenarios$scenario, scenarios$p0, scenarios$p1, scen_n,
-          scenarios$alpha),
+  sprintf(paste0("displaystyle(atop(%s*':'~~italic(p)[0]=='%s'*','~~",
+                 "italic(p)[1]=='%s', italic(N)=='%d'*','~~alpha=='%s'))"),
+          scenarios$scenario, as.character(scenarios$p0),
+          as.character(scenarios$p1), scen_n, as.character(scenarios$alpha)),
   scenarios$scenario)
+strip_lab <- labeller(scenario_f = label_parsed)
 add_factors <- function(df) {
   df$scenario_f <- factor(unname(scen_lab[df$scenario]),
                           levels = unname(scen_lab))
@@ -229,7 +241,7 @@ p1 <- ggplot(fig1, aes(x = x, y = y, colour = method, shape = method,
   }) +
   labs(x = "Number of patients", y = NULL, colour = NULL, shape = NULL,
        linetype = NULL) +
-  theme_article
+  theme_article(10)
 save_figure(p1, "figure1_worked_example", width = 7, height = 3.4)
 
 # Figure 2: type I error rate over random schedules, binding futility
@@ -241,12 +253,12 @@ p2 <- ggplot(rb, aes(x = deviation_f, y = type1 / alpha_nom,
   geom_hline(yintercept = 1, linetype = "dashed", colour = "grey30") +
   geom_boxplot(outlier.size = 0.3, width = 0.7, linewidth = 0.3,
                position = position_dodge(width = 0.8)) +
-  facet_grid(design_f ~ scenario_f) +
+  facet_grid(design_f ~ scenario_f, labeller = strip_lab) +
   scale_fill_manual(values = cols[c("Naive", "Proposed")]) +
   labs(x = "Size of the deviations from the planned sample sizes",
        y = "Type I error rate / nominal level", fill = NULL) +
-  theme_article
-save_figure(p2, "figure2_random_type1", width = 10, height = 6.2)
+  theme_article(12)
+save_figure(p2, "figure2_random_type1", width = 10, height = 6.6)
 
 # Figure 3: deviation of the final sample size only, binding futility
 method_lab <- c(naive = "Naive", recalibrated = "Recalibrated",
@@ -269,14 +281,15 @@ p3 <- ggplot(fb, aes(x = final_n, y = type1 / alpha_nom, colour = method_f,
              colour = "grey50") +
   geom_line() +
   geom_point(size = 1) +
-  facet_grid(design_f ~ scenario_f, scales = "free_x") +
+  facet_grid(design_f ~ scenario_f, scales = "free_x",
+             labeller = strip_lab) +
   scale_colour_manual(values = cols_all) +
   scale_shape_manual(values = shapes_all) +
   labs(x = "Actual final sample size (interim analyses as planned)",
        y = "Type I error rate / nominal level", colour = NULL,
        shape = NULL) +
-  theme_article
-save_figure(p3, "figure3_final_deviation", width = 10, height = 6.2)
+  theme_article(12)
+save_figure(p3, "figure3_final_deviation", width = 10, height = 6.6)
 
 # Figure 4: power relative to the oracle design under deviations of the final
 # sample size, for the methods that control the type I error rate
@@ -296,14 +309,15 @@ p4 <- ggplot(fo, aes(x = final_n, y = diff, colour = method_f,
              colour = "grey50") +
   geom_line() +
   geom_point(size = 1) +
-  facet_grid(design_f ~ scenario_f, scales = "free_x") +
+  facet_grid(design_f ~ scenario_f, scales = "free_x",
+             labeller = strip_lab) +
   scale_colour_manual(values = cols_all) +
   scale_shape_manual(values = shapes_all) +
   labs(x = "Actual final sample size (interim analyses as planned)",
        y = "Power minus power of the oracle design", colour = NULL,
        shape = NULL) +
-  theme_article
-save_figure(p4, "figure4_power_final_deviation", width = 10, height = 6.2)
+  theme_article(12)
+save_figure(p4, "figure4_power_final_deviation", width = 10, height = 6.6)
 
 message("Tables written to ", tab_dir)
 message("Figures written to ", fig_dir)

@@ -33,6 +33,7 @@ chunks <- list(
                 "                      n = c(10, 15, 20, 25, 30, 35, 40),",
                 "                      alpha = 0.1)"), eval = TRUE),
   list(code = "design", eval = TRUE),
+  list(code = "design$calibration$equivalent", eval = TRUE),
   list(code = "flex_spending(design)", eval = TRUE),
   list(code = "flex_update(design, m = c(12, 16, 19))", eval = TRUE),
   list(code = "m <- c(12, 16, 19, 25, 31, 37, 39)", eval = TRUE),

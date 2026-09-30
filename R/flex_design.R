@@ -10,9 +10,14 @@
 #' largest power is chosen, with ties broken by the smaller expected sample
 #' size under the null hypothesis and then by the order of the grids. The
 #' reported tuning parameters are the first values in grid order that produce
-#' the chosen boundaries. This follows the procedure of Zhou et al. (2017,
-#' Section 2.3) and Xu et al. (2025, Section 2.3), with the operating
-#' characteristics computed exactly rather than by simulation. The default
+#' the chosen boundaries, that is, the smallest \code{lambda}, then the
+#' smallest \code{gamma} and \code{eta}. Other grid points often give the
+#' same boundaries on the planned schedule; they define the same planned
+#' design but different probability cutoffs at other sample sizes, and are
+#' listed in the element \code{calibration$equivalent}. This follows the
+#' procedure of Zhou et al. (2017, Section 2.3) and Xu et al. (2025, Section
+#' 2.3), with the operating characteristics computed exactly rather than by
+#' simulation. The default
 #' grids cover the ranges of Xu et al. (2025) in steps of 0.01 for
 #' \code{lambda} (0 to 1) and \code{gamma} (0.01 to 1) and 0.1 for \code{eta}
 #' (0.1 to 3).
@@ -40,8 +45,11 @@
 #' @return An object of class \code{"flex_design"}; see
 #'   \code{\link{flex_plan}}. It also contains the element
 #'   \code{calibration}, a list with the grids, the number of distinct
-#'   boundary sets evaluated and the number meeting the type I error
-#'   constraint.
+#'   boundary sets evaluated, the number meeting the type I error
+#'   constraint, and \code{equivalent}, a data frame with columns
+#'   \code{lambda}, \code{gamma} and \code{eta} (\code{NA} when not used)
+#'   listing, in grid order, every grid point that gives the selected
+#'   boundaries. Its first row holds the reported tuning parameters.
 #'
 #' @references
 #' Zhou, H., Lee, J. J., and Yuan, Y. (2017). BOP2: Bayesian optimal design for
@@ -109,6 +117,11 @@ flex_design <- function(p0, p1, n, alpha = 0.1, type = c("BOP2-FE", "BOP2"),
   # Candidate boundary sets for each lambda: distinct futility boundaries over
   # the gamma grid combined with distinct efficacy boundaries over the eta grid
   cand <- vector("list", length(lambda_grid))
+  # Boundaries of every grid point, kept to list the equivalent grid points
+  e_final_all <- integer(length(lambda_grid))
+  f_full <- vector("list", length(lambda_grid))
+  e_full <- vector("list", length(lambda_grid))
+  eta_full <- vector("list", length(lambda_grid))
   for (i in seq_along(lambda_grid)) {
     lam <- lambda_grid[i]
     e_final <- flex_efficacy_count(post[[num_looks]], lam)
@@ -116,6 +129,8 @@ flex_design <- function(p0, p1, n, alpha = 0.1, type = c("BOP2-FE", "BOP2"),
     for (k in interim) {
       f_mat[, k] <- flex_futility_count(post[[k]], lam * t[k]^gamma_grid)
     }
+    e_final_all[i] <- e_final
+    f_full[[i]] <- f_mat
     keep_f <- !duplicated(f_mat)
     f_uni <- f_mat[keep_f, , drop = FALSE]
     g_uni <- gamma_grid[keep_f]
@@ -125,6 +140,8 @@ flex_design <- function(p0, p1, n, alpha = 0.1, type = c("BOP2-FE", "BOP2"),
         e_mat[, k] <- flex_efficacy_count(post[[k]],
                                           1 - (1 - lam) * t[k]^eta_grid)
       }
+      e_full[[i]] <- e_mat
+      eta_full[[i]] <- eta_grid
       keep_e <- !duplicated(e_mat)
       e_uni <- e_mat[keep_e, , drop = FALSE]
       et_uni <- eta_grid[keep_e]
@@ -134,9 +151,13 @@ flex_design <- function(p0, p1, n, alpha = 0.1, type = c("BOP2-FE", "BOP2"),
         flex_efficacy_count(post[[k]], ce[k])
       }, integer(1)), nrow = 1)
       et_uni <- NA_real_
+      e_full[[i]] <- e_uni
+      eta_full[[i]] <- NA_real_
     } else {
       e_uni <- matrix(n[interim] + 1L, nrow = 1)
       et_uni <- NA_real_
+      e_full[[i]] <- e_uni
+      eta_full[[i]] <- NA_real_
     }
     fi <- rep(seq_len(nrow(f_uni)), each = nrow(e_uni))
     ei <- rep(seq_len(nrow(e_uni)), times = nrow(f_uni))
@@ -185,11 +206,44 @@ flex_design <- function(p0, p1, n, alpha = 0.1, type = c("BOP2-FE", "BOP2"),
     stop("Internal error: the selected boundaries could not be reproduced.",
          call. = FALSE)
   }
+  # Every grid point that gives the selected boundaries
+  sel_fut <- as.integer(fut_f[best, interim])
+  sel_eff <- as.integer(eff_f[best, ])
+  equiv <- list()
+  for (i in seq_along(lambda_grid)) {
+    if (e_final_all[i] != sel_eff[num_looks]) next
+    e_mat <- e_full[[i]]
+    e_ok <- which(apply(e_mat, 1, function(x) all(x == sel_eff[interim])))
+    for (r in e_ok) {
+      cap <- matrix(e_mat[r, ] - 1L, nrow(f_full[[i]]), num_looks - 1,
+                    byrow = TRUE)
+      f_int <- pmin(f_full[[i]], cap)
+      g_ok <- which(apply(f_int, 1, function(x) all(x == sel_fut)))
+      if (length(g_ok) > 0) {
+        equiv[[length(equiv) + 1]] <- data.frame(
+          lambda = lambda_grid[i], gamma = gamma_grid[g_ok],
+          eta = eta_full[[i]][r])
+      }
+    }
+  }
+  equivalent <- do.call(rbind, equiv)
+  equivalent <- equivalent[order(match(equivalent$lambda, lambda_grid),
+                                 match(equivalent$gamma, gamma_grid),
+                                 match(equivalent$eta, eta_grid)), ]
+  rownames(equivalent) <- NULL
+  if (!isTRUE(all.equal(equivalent$lambda[1], par_f$lambda[best])) ||
+      !isTRUE(all.equal(equivalent$gamma[1], par_f$gamma[best])) ||
+      (use_eta && !isTRUE(all.equal(equivalent$eta[1], par_f$eta[best])))) {
+    stop("Internal error: the equivalent grid points are inconsistent.",
+         call. = FALSE)
+  }
+
   design$source <- "calibration"
   design$calibration <- list(lambda_grid = lambda_grid,
                              gamma_grid = gamma_grid,
                              eta_grid = if (use_eta) eta_grid else NULL,
                              n_candidates = nrow(fut_all),
-                             n_feasible = length(feasible))
+                             n_feasible = length(feasible),
+                             equivalent = equivalent)
   design
 }
