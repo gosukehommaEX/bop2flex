@@ -2,7 +2,7 @@
 
 Sample size deviations in Bayesian optimal phase II designs.
 
-The Bayesian optimal phase II design (BOP2; Zhou, Lee and Yuan, 2017) and its extension with futility and efficacy stopping (BOP2-FE; Xu, Hashimoto, Yimer and Takeda, 2025) are calibrated for planned interim and final sample sizes. In practice the number of evaluable patients at an analysis often differs from the plan. Because the probability cutoffs are written as functions of the information fraction `n / N`, it is tempting to evaluate them at the actual sample sizes. This naive practice can raise the type I error rate above its nominal level. **bop2flex** computes boundaries at the actual analyses that keep the type I error rate at or below the nominal level for any schedule of analyses, and that coincide with the planned boundaries when the trial follows its plan. All operating characteristics are computed exactly, without simulation, for a single binary endpoint.
+The Bayesian optimal phase II design (BOP2; Zhou, Lee and Yuan, 2017) and its extension with futility and efficacy stopping (BOP2-FE; Xu, Hashimoto, Yimer and Takeda, 2026) are calibrated for planned interim and final sample sizes. In practice the number of evaluable patients at an analysis often differs from the plan. Because the probability cutoffs are written as functions of the information fraction `n / N`, it is tempting to evaluate them at the actual sample sizes. This naive practice can raise the type I error rate above its nominal level. **bop2flex** computes boundaries at the actual analyses that keep the type I error rate at or below the nominal level for any schedule of analyses, and that coincide with the planned boundaries when the trial follows its plan. All operating characteristics are computed exactly, without simulation, for a single binary endpoint.
 
 ## Installation
 
@@ -13,7 +13,7 @@ remotes::install_github("gosukehommaEX/bop2flex")
 
 ## Example
 
-A trial with a null response rate of 0.2 and an alternative of 0.4 plans analyses after 10, 15, 20, 25, 30, 35 and 40 patients. `flex_design()` calibrates the BOP2-FE design by the grid search of Xu et al. (2025), with exact operating characteristics.
+A trial with a null response rate of 0.2 and an alternative of 0.4 plans analyses after 10, 15, 20, 25, 30, 35 and 40 patients. `flex_design()` calibrates the BOP2-FE design by the grid search of Xu et al. (2026), with exact operating characteristics.
 
 ```r
 library(bop2flex)
@@ -22,7 +22,7 @@ design <- flex_design(p0 = 0.2, p1 = 0.4, n = c(10, 15, 20, 25, 30, 35, 40),
 design
 ```
 
-The selected tuning parameters are `lambda = 0.87`, `gamma = 0.94` and `eta = 2.4`. The trial stops for futility when the number of responses is at most 1, 2, 3, 5, 7 and 8 at the interim analyses, and stops for efficacy when it is at least 6, 8, 9, 9, 10 and 11. At the final analysis the null hypothesis is rejected with at least 12 responses. These are the BOP2-FE-1 boundaries of Xu et al. (2025, Table 1). The exact type I error rate is 0.0988 and the power is 0.890. Seven other grid points give the same boundaries, for example `lambda = 0.88`, `gamma = 1` and `eta = 2.3`; they are listed in `design$calibration$equivalent`. They define the same planned design but different probability cutoffs at other sample sizes, so the tuning parameters should be stated together with the boundaries.
+The selected tuning parameters are `lambda = 0.87`, `gamma = 0.94` and `eta = 2.4`. The trial stops for futility when the number of responses is at most 1, 2, 3, 5, 7 and 8 at the interim analyses, and stops for efficacy when it is at least 6, 8, 9, 9, 10 and 11. At the final analysis the null hypothesis is rejected with at least 12 responses. These are the BOP2-FE-1 boundaries of Xu et al. (2026, Table 1). The exact type I error rate is 0.0988 and the power is 0.890. Seven other grid points give the same boundaries, for example `lambda = 0.88`, `gamma = 1` and `eta = 2.3`; they are listed in `design$calibration$equivalent`. They define the same planned design but different probability cutoffs at other sample sizes, so the tuning parameters should be stated together with the boundaries.
 
 Suppose the analyses actually take place after 12, 16, 19, 25, 31, 37 and 39 patients. `flex_update()` is called at each analysis with the sample sizes so far.
 
@@ -67,7 +67,7 @@ The procedure has three properties.
 
 For sensitivity analyses, `flex_update()` accepts another spending function through `spending` and omits the floor with `efficacy_floor = FALSE`; the type I error guarantee holds in both cases, but only the implied spending function recovers the planned boundaries.
 
-Futility stopping is binding by default, as in Zhou et al. (2017) and Xu et al. (2025). With `binding = FALSE` the type I error rate is computed without the futility boundaries, and the guarantee holds whether or not they are followed. Both efficacy cutoffs of Xu et al. (2025) are available, the power function (`method = "power"`, BOP2-FE-1) and the O'Brien-Fleming type function (`method = "OF"`, BOP2-FE-2). The BOP2 design with futility stopping only is obtained with `type = "BOP2"`.
+Futility stopping is binding by default, as in Zhou et al. (2017) and Xu et al. (2026). With `binding = FALSE` the type I error rate is computed without the futility boundaries, and the guarantee holds whether or not they are followed. Both efficacy cutoffs of Xu et al. (2026) are available, the power function (`method = "power"`, BOP2-FE-1) and the O'Brien-Fleming type function (`method = "OF"`, BOP2-FE-2). The BOP2 design with futility stopping only is obtained with `type = "BOP2"`.
 
 ## Functions
 
@@ -88,17 +88,17 @@ Futility stopping is binding by default, as in Zhou et al. (2017) and Xu et al. 
 
 The tests compare the package with published values and with an independent implementation in Python.
 
-* `flex_design()` reproduces the BOP2 boundaries of Zhou et al. (2017, Table I, Example 1), the BOP2-FE-1 boundaries of Xu et al. (2025, Table 1) and the BOP2-FE-2 boundaries of Xu et al. (2025, Supplementary Table S1).
-* The exact operating characteristics agree with the simulated values of Zhou et al. (2017, Table II, scenario 1) and Xu et al. (2025, Table 3, scenario 1) within simulation error.
+* `flex_design()` reproduces the BOP2 boundaries of Zhou et al. (2017, Table I, Example 1), the BOP2-FE-1 boundaries of Xu et al. (2026, Table 1) and the BOP2-FE-2 boundaries of Xu et al. (2026, Supplementary Table S1).
+* The exact operating characteristics agree with the simulated values of Zhou et al. (2017, Table II, scenario 1) and Xu et al. (2026, Table 3, scenario 1) within simulation error.
 * The boundaries, spending functions and operating characteristics agree with an independent Python implementation of the same procedures.
 
-Two published values were not used. In Zhou et al. (2017, Table II), the percentage rejecting the null at a response rate of 0.3 (55.2 percent) and the percentage of early termination (46.2 percent) add to more than 100 percent; Xu et al. (2025, Table 3) report 52.8 percent for the same boundaries, and the exact value is 52.8 percent. The BOP2-FE-2 boundaries printed in Table 2 of Xu et al. (2025) differ from those in their Supplementary Table S1; the exact grid search selects the latter.
+Two published values were not used. In Zhou et al. (2017, Table II), the percentage rejecting the null at a response rate of 0.3 (55.2 percent) and the percentage of early termination (46.2 percent) add to more than 100 percent; Xu et al. (2026, Table 3) report 52.8 percent for the same boundaries, and the exact value is 52.8 percent. The BOP2-FE-2 boundaries printed in Table 2 of Xu et al. (2026) differ from those in their Supplementary Table S1; the exact grid search selects the latter.
 
 ## References
 
 Zhou, H., Lee, J. J., and Yuan, Y. (2017). BOP2: Bayesian optimal design for phase II clinical trials with simple and complex endpoints. *Statistics in Medicine*, 36(21), 3302-3314. <https://doi.org/10.1002/sim.7338>
 
-Xu, X., Hashimoto, A., Yimer, B. B., and Takeda, K. (2025). BOP2-FE: Bayesian optimal phase II design with futility and efficacy-stopping boundaries. *Journal of Biopharmaceutical Statistics*. <https://doi.org/10.1080/10543406.2025.2558142>
+Xu, X., Hashimoto, A., Yimer, B. B., and Takeda, K. (2026). BOP2-FE: Bayesian optimal phase II design with futility and efficacy-stopping boundaries. *Journal of Biopharmaceutical Statistics*, 36(5), 1100-1117. <https://doi.org/10.1080/10543406.2025.2558142>
 
 ## License
 

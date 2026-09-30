@@ -18,7 +18,7 @@ test_that("flex_oc matches independent exact values", {
 test_that("flex_oc agrees with the simulations of Zhou et al. (2017)", {
   # Table II, scenario 1 (10,000 simulated trials): PRN, PET and sample size.
   # The PRN of 55.2 percent at ORR 0.3 is not used: with PET 46.2 percent the
-  # two add to more than 100 percent, and Xu et al. (2025, Table 3) report
+  # two add to more than 100 percent, and Xu et al. (2026, Table 3) report
   # 52.8 percent for the same boundaries. The tolerances are about three
   # simulation standard errors plus the rounding of the published values.
   o <- flex_oc(n, c(1, 2, 4, 5, 7, 9), c(rep(NA, 6), 11),
@@ -29,7 +29,7 @@ test_that("flex_oc agrees with the simulations of Zhou et al. (2017)", {
   expect_equal(o$early_efficacy, rep(0, 4))
 })
 
-test_that("flex_oc agrees with the simulations of Xu et al. (2025)", {
+test_that("flex_oc agrees with the simulations of Xu et al. (2026)", {
   # Table 3, scenario 1 (10,000 simulated trials), percent rejecting and
   # average sample size
   p <- c(0.2, 0.3, 0.4, 0.5)

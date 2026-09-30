@@ -47,7 +47,7 @@ boundaries are supplied.}
 alternative hypothesis, larger than \code{p0}.}
 
 \item{binding}{A single logical value. With \code{TRUE} (the default, as in
-Zhou et al. 2017 and Xu et al. 2025) the type I error rate is computed
+Zhou et al. 2017 and Xu et al. 2026) the type I error rate is computed
 with binding futility stopping; with \code{FALSE} the futility boundaries
 are ignored in the type I error rate.}
 
@@ -89,7 +89,7 @@ because \code{\link{flex_update}} spends at most \code{alpha} over the
 whole trial.
 }
 \examples{
-# BOP2-FE-1 design of Xu et al. (2025, Table 1) from its tuning parameters
+# BOP2-FE-1 design of Xu et al. (2026, Table 1) from its tuning parameters
 flex_plan(p0 = 0.2, n = c(10, 15, 20, 25, 30, 35, 40), alpha = 0.1,
           lambda = 0.87, gamma = 0.94, eta = 2.4, p1 = 0.4)
 

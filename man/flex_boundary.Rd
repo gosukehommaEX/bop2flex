@@ -58,7 +58,7 @@ least this value; \code{m + 1} means never).
 }
 \description{
 Converts the probability cutoffs of the BOP2 design (Zhou et al. 2017) and
-the BOP2-FE design (Xu et al. 2025) into boundaries on the cumulative
+the BOP2-FE design (Xu et al. 2026) into boundaries on the cumulative
 number of responses at the sample sizes \code{m}, for a maximum sample size
 \code{N}.
 }
@@ -72,7 +72,7 @@ analysis the trial stops for futility when \code{P(y) < C_F(t)}, with
 \code{z} the \code{(1 + lambda) / 2} quantile of the standard normal
 distribution, for \code{method = "OF"}. At the final analysis the null
 hypothesis is rejected when \code{P(y) >= lambda}. These are the rules of
-Xu et al. (2025, Section 2); for the futility rule they are equivalent to
+Xu et al. (2026, Section 2); for the futility rule they are equivalent to
 \code{Pr(p <= p0 | data) > 1 - C_F(t)} as written by Zhou et al. (2017).
 Because \code{P(y)} is non-decreasing in \code{y}, each rule is a boundary
 on the count. When the futility and efficacy regions would overlap, the
@@ -84,7 +84,7 @@ control the type I error rate; see \code{\link{flex_naive}} and
 \code{\link{flex_update}}.
 }
 \examples{
-# BOP2-FE-1 design of Xu et al. (2025, Table 1)
+# BOP2-FE-1 design of Xu et al. (2026, Table 1)
 flex_boundary(m = c(10, 15, 20, 25, 30, 35, 40), N = 40, p0 = 0.2,
               lambda = 0.87, gamma = 0.94, eta = 2.4,
               final = c(rep(FALSE, 6), TRUE))
@@ -96,8 +96,9 @@ phase II clinical trials with simple and complex endpoints.
 \emph{Statistics in Medicine}, 36(21), 3302-3314.
 \doi{10.1002/sim.7338}
 
-Xu, X., Hashimoto, A., Yimer, B. B., and Takeda, K. (2025). BOP2-FE:
+Xu, X., Hashimoto, A., Yimer, B. B., and Takeda, K. (2026). BOP2-FE:
 Bayesian optimal phase II design with futility and efficacy-stopping
-boundaries. \emph{Journal of Biopharmaceutical Statistics}.
+boundaries. \emph{Journal of Biopharmaceutical Statistics}, 36(5),
+1100-1117.
 \doi{10.1080/10543406.2025.2558142}
 }

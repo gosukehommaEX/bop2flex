@@ -30,12 +30,12 @@ Computes the posterior probability \code{Pr(p > p0 | S_m = y)} that the
 response rate \code{p} exceeds the null response rate \code{p0}, given
 \code{y} responses among \code{m} evaluable patients, under a beta prior.
 This is the quantity monitored by the BOP2 design of Zhou et al. (2017) and
-the BOP2-FE design of Xu et al. (2025) for a single binary endpoint.
+the BOP2-FE design of Xu et al. (2026) for a single binary endpoint.
 }
 \details{
 With a \code{Beta(a, b)} prior the posterior distribution of \code{p} is
 \code{Beta(a + y, b + m - y)}, so the probability is an upper tail of that
-beta distribution. Zhou et al. (2017) and Xu et al. (2025) use a Dirichlet
+beta distribution. Zhou et al. (2017) and Xu et al. (2026) use a Dirichlet
 prior whose parameters sum to one, which for a binary endpoint is a beta
 prior with \code{a + b = 1}; the values of \code{a} and \code{b} are not
 fixed in the articles. The default \code{a = p0} and \code{b = 1 - p0}
@@ -58,8 +58,9 @@ phase II clinical trials with simple and complex endpoints.
 \emph{Statistics in Medicine}, 36(21), 3302-3314.
 \doi{10.1002/sim.7338}
 
-Xu, X., Hashimoto, A., Yimer, B. B., and Takeda, K. (2025). BOP2-FE:
+Xu, X., Hashimoto, A., Yimer, B. B., and Takeda, K. (2026). BOP2-FE:
 Bayesian optimal phase II design with futility and efficacy-stopping
-boundaries. \emph{Journal of Biopharmaceutical Statistics}.
+boundaries. \emph{Journal of Biopharmaceutical Statistics}, 36(5),
+1100-1117.
 \doi{10.1080/10543406.2025.2558142}
 }

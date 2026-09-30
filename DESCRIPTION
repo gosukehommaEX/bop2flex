@@ -11,7 +11,7 @@ Authors@R: person(
 Description: Exact computations for the Bayesian optimal phase II design
     (BOP2) of Zhou, Lee and Yuan (2017) <doi:10.1002/sim.7338> and its
     extension with futility and efficacy stopping (BOP2-FE) of Xu, Hashimoto,
-    Yimer and Takeda (2025) <doi:10.1080/10543406.2025.2558142>, for a single
+    Yimer and Takeda (2026) <doi:10.1080/10543406.2025.2558142>, for a single
     binary endpoint when the numbers of patients at the interim and final
     analyses differ from those planned. The boundaries at the actual analyses
     are derived from the error spending function implied by the planned

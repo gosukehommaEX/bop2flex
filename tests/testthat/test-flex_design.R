@@ -1,9 +1,9 @@
-# Expected values: Xu et al. (2025, Table 1) and Zhou et al. (2017, Table I)
+# Expected values: Xu et al. (2026, Table 1) and Zhou et al. (2017, Table I)
 # for the boundaries, and an independent Python implementation of the same
 # grid search for the tuning parameters and operating characteristics.
 n <- c(10, 15, 20, 25, 30, 35, 40)
 
-test_that("flex_design selects the BOP2-FE-1 design of Xu et al. (2025)", {
+test_that("flex_design selects the BOP2-FE-1 design of Xu et al. (2026)", {
   d <- flex_design(p0 = 0.2, p1 = 0.4, n = n)
   expect_equal(c(d$lambda, d$gamma, d$eta), c(0.87, 0.94, 2.4),
                tolerance = 1e-12)
@@ -30,7 +30,7 @@ test_that("flex_design selects the BOP2 design of Zhou et al. (2017)", {
 test_that("flex_design selects the O'Brien-Fleming type design", {
   skip_on_cran()
   # The selected boundaries are those of Supplementary Table S1 of Xu et al.
-  # (2025); Table 2 of the article prints a different BOP2-FE-2 boundary.
+  # (2026); Table 2 of the article prints a different BOP2-FE-2 boundary.
   d <- flex_design(p0 = 0.2, p1 = 0.4, n = n, method = "OF")
   expect_equal(c(d$lambda, d$gamma), c(0.88, 0.95), tolerance = 1e-12)
   expect_identical(d$boundary$futility, c(1L, 2L, 3L, 5L, 7L, 9L, 11L))

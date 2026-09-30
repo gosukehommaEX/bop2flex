@@ -1,7 +1,7 @@
 n <- c(10, 15, 20, 25, 30, 35, 40)
 last <- c(rep(FALSE, 6), TRUE)
 
-test_that("flex_boundary reproduces Xu et al. (2025, Table 1), BOP2-FE-1", {
+test_that("flex_boundary reproduces Xu et al. (2026, Table 1), BOP2-FE-1", {
   bd <- flex_boundary(n, 40, 0.2, 0.87, 0.94, 2.4, final = last)
   expect_identical(bd$futility, c(1L, 2L, 3L, 5L, 7L, 8L, 11L))
   expect_identical(bd$efficacy, c(6L, 8L, 9L, 9L, 10L, 11L, 12L))
@@ -18,7 +18,7 @@ test_that("flex_boundary reproduces Zhou et al. (2017, Table I), BOP2", {
 })
 
 test_that("flex_boundary gives the O'Brien-Fleming type boundaries", {
-  # Supplementary Table S1 of Xu et al. (2025), BOP2-FE-2, single binary
+  # Supplementary Table S1 of Xu et al. (2026), BOP2-FE-2, single binary
   # endpoint; lambda = 0.88 and gamma = 0.95 are selected by flex_design()
   bd <- flex_boundary(n, 40, 0.2, 0.88, 0.95, type = "BOP2-FE",
                       method = "OF", final = last)

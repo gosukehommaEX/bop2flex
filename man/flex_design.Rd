@@ -62,7 +62,7 @@ boundaries. Its first row holds the reported tuning parameters.
 }
 \description{
 Chooses the tuning parameters of the BOP2 design (Zhou et al. 2017) or the
-BOP2-FE design (Xu et al. 2025) for a single binary endpoint by a grid
+BOP2-FE design (Xu et al. 2026) for a single binary endpoint by a grid
 search, and returns the planned design.
 }
 \details{
@@ -77,10 +77,10 @@ smallest \code{gamma} and \code{eta}. Other grid points often give the
 same boundaries on the planned schedule; they define the same planned
 design but different probability cutoffs at other sample sizes, and are
 listed in the element \code{calibration$equivalent}. This follows the
-procedure of Zhou et al. (2017, Section 2.3) and Xu et al. (2025, Section
+procedure of Zhou et al. (2017, Section 2.3) and Xu et al. (2026, Section
 2.3), with the operating characteristics computed exactly rather than by
 simulation. The default
-grids cover the ranges of Xu et al. (2025) in steps of 0.01 for
+grids cover the ranges of Xu et al. (2026) in steps of 0.01 for
 \code{lambda} (0 to 1) and \code{gamma} (0.01 to 1) and 0.1 for \code{eta}
 (0.1 to 3).
 }
@@ -90,7 +90,7 @@ flex_design(p0 = 0.2, p1 = 0.4, n = c(10, 15, 20, 25, 30, 35, 40),
             type = "BOP2")
 
 \donttest{
-# BOP2-FE-1 design of Xu et al. (2025, Table 1)
+# BOP2-FE-1 design of Xu et al. (2026, Table 1)
 flex_design(p0 = 0.2, p1 = 0.4, n = c(10, 15, 20, 25, 30, 35, 40))
 }
 
@@ -101,8 +101,9 @@ phase II clinical trials with simple and complex endpoints.
 \emph{Statistics in Medicine}, 36(21), 3302-3314.
 \doi{10.1002/sim.7338}
 
-Xu, X., Hashimoto, A., Yimer, B. B., and Takeda, K. (2025). BOP2-FE:
+Xu, X., Hashimoto, A., Yimer, B. B., and Takeda, K. (2026). BOP2-FE:
 Bayesian optimal phase II design with futility and efficacy-stopping
-boundaries. \emph{Journal of Biopharmaceutical Statistics}.
+boundaries. \emph{Journal of Biopharmaceutical Statistics}, 36(5),
+1100-1117.
 \doi{10.1080/10543406.2025.2558142}
 }

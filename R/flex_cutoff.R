@@ -2,7 +2,7 @@
 #'
 #' Internal helper that evaluates the futility cutoff
 #' \code{C_F(t) = lambda t^gamma} of Zhou et al. (2017) and the efficacy cutoff
-#' of Xu et al. (2025), either the power function
+#' of Xu et al. (2026), either the power function
 #' \code{C_E(t) = 1 - (1 - lambda) t^eta} or the O'Brien-Fleming type function
 #' \code{C_E(t) = 2 Phi(z / sqrt(t)) - 1} with \code{z} the
 #' \code{(1 + lambda) / 2} quantile of the standard normal distribution. The
