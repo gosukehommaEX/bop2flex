@@ -21,6 +21,10 @@
 #      main article and of B and D repeated with the grid point of the
 #      largest lambda instead of the reported one, and the grid points of the
 #      TREND setting
+#   G. Naive boundaries over the exhaustive schedules of B for every grid
+#      point that gives the planned boundaries
+#   H. Designs specified by their boundary table: floor of flex_update() and
+#      the planned boundaries on the planned schedule
 
 if (!exists("flex_design", mode = "function")) library(bop2flex)
 
@@ -404,6 +408,7 @@ sens_summary <- function(d, exh, fin, sh, rnd, orc, ce) {
 }
 
 sens <- list()
+eq_list <- list()
 for (i in seq_len(nrow(config))) {
   id <- config$id[i]
   d <- planned[[i]]
@@ -415,6 +420,7 @@ for (i in seq_len(nrow(config))) {
     stop("The calibration of ", id, " does not reproduce the planned design.")
   }
   eq <- cal$calibration$equivalent
+  eq_list[[id]] <- eq
   top <- eq[eq$lambda == max(eq$lambda), ][1, ]
   dl <- flex_plan(p0 = d$p0, n = d$n, alpha = d$alpha, lambda = top$lambda,
                   gamma = top$gamma,
@@ -636,6 +642,150 @@ for (s in trend$schedules) {
 }
 saveRDS(list(summary = sens, trend = tr_eq_res),
         file.path(out_dir, "equivalent_grid_points.rds"))
+
+# G. Naive boundaries over all grid points that give the planned boundaries
+# The naive boundaries evaluate the futility and efficacy cutoffs at the
+# actual sample sizes, so they depend on gamma and eta as well as on lambda.
+# For the exhaustive schedules of B, the number of schedules with a naive type
+# I error rate above alpha is counted for every grid point of each design.
+message("G. Naive boundaries over all equivalent grid points (", elapsed(),
+        ")")
+# Smallest count whose posterior probability reaches each cutoff (m + 1 if
+# none, or if the cutoff is NA), from the posterior probabilities post of 0,
+# ..., m responses, which increase with the count. This is the rule of the
+# efficacy boundary in flex_boundary(); the futility boundary is one less.
+count_at_least <- function(post, cutoff) {
+  out <- findInterval(cutoff, post, left.open = TRUE)
+  out[is.na(cutoff)] <- length(post)
+  as.integer(out)
+}
+# Number of schedules in sch on which the naive boundaries of each grid point
+# in eq (rows) have a type I error rate above alpha
+naive_exceed_all <- function(d, eq, sch) {
+  a <- d$prior[["a"]]
+  b <- d$prior[["b"]]
+  eta <- if (is.null(eq$eta)) rep(NA_real_, nrow(eq)) else eq$eta
+  cnt <- integer(nrow(eq))
+  for (s in sch) {
+    num <- length(s)
+    fut <- matrix(0L, nrow(eq), num)
+    eff <- matrix(0L, nrow(eq), num)
+    for (k in seq_len(num)) {
+      post <- flex_posterior(0:s[k], s[k], d$p0, a, b)
+      if (k == num) {
+        eff[, k] <- count_at_least(post, eq$lambda)
+        fut[, k] <- eff[, k] - 1L
+      } else {
+        t <- min(s[k] / d$N, 1)
+        cut_eff <- if (d$type == "BOP2") {
+          rep(NA_real_, nrow(eq))
+        } else if (d$method == "power") {
+          1 - (1 - eq$lambda) * t^eta
+        } else {
+          2 * stats::pnorm(stats::qnorm((1 + eq$lambda) / 2) / sqrt(t)) - 1
+        }
+        eff[, k] <- count_at_least(post, cut_eff)
+        fut[, k] <- pmin(count_at_least(post, eq$lambda * t^eq$gamma) - 1L,
+                         eff[, k] - 1L)
+      }
+    }
+    key <- do.call(paste, c(as.data.frame(cbind(fut, eff)), sep = ","))
+    first <- which(!duplicated(key))
+    t1 <- vapply(first, function(r) {
+      flex_oc(s, fut[r, ], eff[r, ], d$p0, binding = d$binding)$reject
+    }, numeric(1))
+    cnt <- cnt + (t1[match(key, key[first])] > d$alpha * (1 + 1e-9))
+  }
+  cnt
+}
+all_points <- list()
+for (i in seq_len(nrow(config))) {
+  id <- config$id[i]
+  d <- planned[[i]]
+  eq <- eq_list[[id]]
+  ex <- exhaustive[exhaustive$scenario == config$scenario[i], ]
+  sch <- enum_schedules(d$n, ex$interim_shift, ex$final_shift)
+  cnt <- naive_exceed_all(d, eq, sch)
+  # The reported grid point (first row) and the grid point of the largest
+  # lambda must give the counts obtained with flex_compare() in B and F
+  top_row <- which.max(eq$lambda)
+  if (cnt[1] != sum(exh_res$exceeds_alpha[exh_res$id == id &
+                                            exh_res$method == "naive"]) ||
+      cnt[top_row] != sens$exhaustive.naive.n_exceed[sens$id == id]) {
+    stop("The naive counts over the grid points of ", id,
+         " do not agree with B and F.")
+  }
+  all_points[[id]] <- data.frame(eq, n_exceed = cnt)
+  add_number(paste("allpoints", id, "exhaustive.n", sep = "."), length(sch),
+             "All equivalent grid points: exhaustive schedules")
+  add_number(paste("allpoints", id, "exhaustive.naive.n_exceed_min",
+                   sep = "."), min(cnt),
+             "All equivalent grid points: fewest schedules above alpha, naive")
+  add_number(paste("allpoints", id, "exhaustive.naive.n_exceed_max",
+                   sep = "."), max(cnt),
+             "All equivalent grid points: most schedules above alpha, naive")
+  add_number(paste("allpoints", id, "exhaustive.naive.exceed_pct_min",
+                   sep = "."), 100 * min(cnt) / length(sch),
+             "All equivalent grid points: smallest percentage above alpha")
+  add_number(paste("allpoints", id, "exhaustive.naive.exceed_pct_max",
+                   sep = "."), 100 * max(cnt) / length(sch),
+             "All equivalent grid points: largest percentage above alpha")
+  message("  ", id, ": ", nrow(eq), " grid points (", elapsed(), ")")
+}
+ap_min <- vapply(all_points, function(x) min(x$n_exceed), numeric(1))
+ap_max <- vapply(all_points, function(x) max(x$n_exceed), numeric(1))
+single <- vapply(all_points, function(x) length(unique(x$lambda)) == 1,
+                 logical(1))
+add_number("overall.allpoints.exhaustive.naive.n_exceed_min_sum", sum(ap_min),
+           "All equivalent grid points: sum over designs of the fewest")
+add_number("overall.allpoints.exhaustive.naive.n_exceed_max_sum", sum(ap_max),
+           "All equivalent grid points: sum over designs of the most")
+add_number("overall.allpoints.n_single_lambda_varying",
+           sum(single & ap_max > ap_min),
+           "Designs with a single lambda whose naive counts still vary")
+saveRDS(all_points, file.path(out_dir, "all_grid_points.rds"))
+
+# H. Designs specified by their boundary table
+# For a design given only by its boundary table, flex_update() replaces lambda
+# in the floor by the smallest posterior probability at the planned efficacy
+# boundaries that do not exceed the planned sample sizes. For the calibrated
+# designs and the TREND design, this floor is compared with the lambda of every
+# grid point that gives the table, and the table design is checked to give the
+# planned boundaries on the planned schedule.
+message("H. Designs given by their boundary table (", elapsed(), ")")
+table_check <- function(d, lambda_all) {
+  e <- d$boundary$efficacy
+  reach <- which(e <= d$n)
+  floor_cut <- min(vapply(reach, function(j) {
+    flex_posterior(e[j], d$n[j], d$p0, d$prior[["a"]], d$prior[["b"]])
+  }, numeric(1)))
+  tab <- flex_plan(p0 = d$p0, n = d$n, alpha = d$alpha,
+                   futility = d$boundary$futility, efficacy = e, p1 = d$p1,
+                   binding = d$binding)
+  b <- flex_update(tab, d$n, final = TRUE)$bounds
+  c(floor = floor_cut, lambda_max = max(lambda_all),
+    reproduces = identical(b$futility, d$boundary$futility) &&
+      identical(b$efficacy, d$boundary$efficacy))
+}
+table_res <- lapply(seq_len(nrow(config)), function(i) {
+  table_check(planned[[i]], eq_list[[config$id[i]]]$lambda)
+})
+names(table_res) <- config$id
+table_res[["trend"]] <- table_check(tr_design, tr_eq$lambda)
+for (id in names(table_res)) {
+  for (v in names(table_res[[id]])) {
+    add_number(paste("table", id, v, sep = "."), table_res[[id]][[v]],
+               paste("Design given by its boundary table:", v))
+  }
+}
+tr_des <- do.call(rbind, table_res[config$id])
+add_number("overall.table.n_designs", nrow(tr_des),
+           "Designs given by their boundary table")
+add_number("overall.table.n_floor_above_lambda_max",
+           sum(tr_des[, "floor"] > tr_des[, "lambda_max"]),
+           "Designs whose table floor exceeds every equivalent lambda")
+add_number("overall.table.n_reproduces", sum(tr_des[, "reproduces"]),
+           "Designs whose table gives the planned boundaries")
 
 numbers <- do.call(rbind, numbers)
 utils::write.csv(numbers, file.path(out_dir, "numbers.csv"),

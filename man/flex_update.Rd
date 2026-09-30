@@ -74,8 +74,12 @@ posterior probability \code{Pr(p > p0 | data)} reaches the final cutoff
 \code{lambda} of the design, so that efficacy is never claimed with weaker
 posterior evidence than the planned final analysis requires; for a design
 given by its boundary table, the smallest posterior probability at the
-planned efficacy boundaries is used instead of \code{lambda}. This floor
-only raises boundaries and leaves the planned boundaries unchanged. The
+planned efficacy boundaries that do not exceed the planned sample sizes is
+used instead of \code{lambda}. For a table obtained from
+\code{\link{flex_design}}, this is at least the \code{lambda} of every grid
+point that gives the table. This floor only raises boundaries; with the
+tuning parameters, or with a table obtained from \code{\link{flex_design}},
+it leaves the planned boundaries unchanged. The
 futility boundary is the planned futility cutoff \code{C_F(m_k / N)} (see
 \code{\link{flex_boundary}}) unless given in \code{futility}, and is lowered
 when needed to lie below the efficacy boundary.

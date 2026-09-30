@@ -126,6 +126,51 @@ test_that("flex_update works with a design given by its boundary table", {
   expect_identical(b2$bounds$efficacy, c(7L, 8L))
 })
 
+test_that("tables of calibrated designs give the planned boundaries", {
+  designs <- list(
+    fe1,
+    flex_plan(p0 = 0.2, n = n, alpha = 0.1, lambda = 0.84, gamma = 0.64,
+              type = "BOP2"),
+    flex_plan(p0 = 0.2, n = n, alpha = 0.1, lambda = 0.88, gamma = 0.95,
+              method = "OF"),
+    flex_plan(p0 = 0.2, n = n, alpha = 0.1, lambda = 0.91, gamma = 1,
+              eta = 2.5, binding = FALSE),
+    flex_plan(p0 = 0.1, n = c(10, 15, 20, 25, 30), alpha = 0.1, lambda = 0.84,
+              gamma = 0.7, eta = 1.8)
+  )
+  for (d in designs) {
+    tab <- flex_plan(p0 = d$p0, n = d$n, alpha = d$alpha,
+                     futility = d$boundary$futility,
+                     efficacy = d$boundary$efficacy, binding = d$binding)
+    b <- flex_update(tab, d$n, final = TRUE)
+    expect_identical(b$bounds$futility, d$boundary$futility)
+    expect_identical(b$bounds$efficacy, d$boundary$efficacy)
+  }
+})
+
+test_that("a boundary table sets the floor at its efficacy boundaries", {
+  tab <- flex_plan(p0 = 0.2, n = n, alpha = 0.1,
+                   futility = fe1$boundary$futility,
+                   efficacy = fe1$boundary$efficacy)
+  # Posterior probability computed directly from the beta distribution
+  post <- function(s, m) {
+    stats::pbeta(0.2, 0.2 + s, 0.8 + m - s, lower.tail = FALSE)
+  }
+  e <- fe1$boundary$efficacy
+  reach <- e <= n
+  cut <- min(post(e[reach], n[reach]))
+  # Larger than the lambda of both grid points that give this table (0.87
+  # and 0.88), so the final boundary at 50 patients is higher than with the
+  # tuning parameters
+  expect_gt(cut, 0.88)
+  b <- flex_update(tab, c(45, 50), final = TRUE, futility = c(12, NA))
+  s <- 0:50
+  expect_identical(b$bounds$efficacy[2], min(s[post(s, 50) >= cut]))
+  expect_gt(b$bounds$efficacy[2],
+            flex_update(fe1, c(45, 50), final = TRUE)$bounds$efficacy[2])
+  expect_true(type1(b, tab) <= tab$alpha * (1 + 1e-9))
+})
+
 test_that("flex_update uses the futility boundaries supplied", {
   b <- flex_update(fe1, c(12, 16), futility = c(NA, 0))
   expect_identical(b$bounds$futility, c(1L, 0L))
