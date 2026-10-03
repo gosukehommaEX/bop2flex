@@ -22,7 +22,7 @@ unlink(list.files(out_dir, full.names = TRUE))
 
 # Width of the printed output; the document typesets the transcript in
 # \footnotesize, which holds about 85 characters per line
-old_options <- options(width = 80)
+old_options <- options(width = 84)
 
 # Each chunk is one R expression, given as a character vector of lines. The
 # first chunk is shown but not evaluated, because the package is already

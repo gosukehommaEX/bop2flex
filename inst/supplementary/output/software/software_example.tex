@@ -56,22 +56,14 @@ Boundaries from the implied error spending function of the planned design
 > flex_update(design, m = m, final = TRUE, y = y)
 Boundaries from the implied error spending function of the planned design
   nominal alpha = 0.1, binding futility, planned N = 40
- look  m     t final futility efficacy alpha_target alpha_spent responses
-    1 12 0.300 FALSE        1        7     0.007244    0.003903         3
-    2 16 0.400 FALSE        2        8     0.009774    0.008364         5
-    3 19 0.475 FALSE        3        9     0.013430    0.010710         6
-    4 25 0.625 FALSE        5        9     0.048000    0.047800         7
-    5 31 0.775 FALSE        7       11     0.072470    0.055610         9
-    6 37 0.925 FALSE        9       12     0.091370    0.071560        10
-    7 39 0.975  TRUE       11       12     0.100000    0.084970        11
- decision
- continue
- continue
- continue
- continue
- continue
- continue
-    no-go
+ look  m     t final futility efficacy alpha_target alpha_spent responses decision
+    1 12 0.300 FALSE        1        7     0.007244    0.003903         3 continue
+    2 16 0.400 FALSE        2        8     0.009774    0.008364         5 continue
+    3 19 0.475 FALSE        3        9     0.013430    0.010710         6 continue
+    4 25 0.625 FALSE        5        9     0.048000    0.047800         7 continue
+    5 31 0.775 FALSE        7       11     0.072470    0.055610         9 continue
+    6 37 0.925 FALSE        9       12     0.091370    0.071560        10 continue
+    7 39 0.975  TRUE       11       12     0.100000    0.084970        11    no-go
 > flex_naive(design, m = m, final = TRUE, y = y)
 Naive boundaries (planned probability cutoffs at the actual sample sizes)
   nominal alpha = 0.1, binding futility, planned N = 40
