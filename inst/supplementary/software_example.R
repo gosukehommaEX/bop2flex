@@ -21,8 +21,8 @@ dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 unlink(list.files(out_dir, full.names = TRUE))
 
 # Width of the printed output; the document typesets the transcript in
-# \footnotesize, which holds about 85 characters per line
-old_options <- options(width = 84)
+# \scriptsize, which holds about 100 characters per line
+old_options <- options(width = 92)
 
 # Each chunk is one R expression, given as a character vector of lines. The
 # first chunk is shown but not evaluated, because the package is already
@@ -62,13 +62,13 @@ for (ch in chunks) {
 options(old_options)
 
 # Guard against lines that would not fit the typeset width
-too_long <- nchar(transcript) > 84
+too_long <- nchar(transcript) > 92
 if (any(too_long)) {
-  stop("Transcript lines longer than 84 characters: ",
+  stop("Transcript lines longer than 92 characters: ",
        paste(which(too_long), collapse = ", "))
 }
 
-writeLines(c("{\\footnotesize", "\\begin{verbatim}", transcript,
+writeLines(c("{\\scriptsize", "\\begin{verbatim}", transcript,
              "\\end{verbatim}", "}"),
            file.path(out_dir, "software_example.tex"))
 message("Software example written to ",

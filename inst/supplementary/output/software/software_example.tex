@@ -1,4 +1,4 @@
-{\footnotesize
+{\scriptsize
 \begin{verbatim}
 > library(bop2flex)
 > design <- flex_design(p0 = 0.2, p1 = 0.4,
@@ -67,22 +67,14 @@ Boundaries from the implied error spending function of the planned design
 > flex_naive(design, m = m, final = TRUE, y = y)
 Naive boundaries (planned probability cutoffs at the actual sample sizes)
   nominal alpha = 0.1, binding futility, planned N = 40
- look  m     t final futility efficacy alpha_target alpha_spent responses
-    1 12 0.300 FALSE        1        7           NA    0.003903         3
-    2 16 0.400 FALSE        2        8           NA    0.008364         5
-    3 19 0.475 FALSE        3        8           NA    0.023970         6
-    4 25 0.625 FALSE        5        9           NA    0.051280         7
-    5 31 0.775 FALSE        7       10           NA    0.082860         9
-    6 37 0.925 FALSE        9       11           NA    0.111400        10
-    7 39 0.975  TRUE       10       11           NA    0.127200        11
-       decision
-       continue
-       continue
-       continue
-       continue
-       continue
-       continue
- go (reject H0)
+ look  m     t final futility efficacy alpha_target alpha_spent responses       decision
+    1 12 0.300 FALSE        1        7           NA    0.003903         3       continue
+    2 16 0.400 FALSE        2        8           NA    0.008364         5       continue
+    3 19 0.475 FALSE        3        8           NA    0.023970         6       continue
+    4 25 0.625 FALSE        5        9           NA    0.051280         7       continue
+    5 31 0.775 FALSE        7       10           NA    0.082860         9       continue
+    6 37 0.925 FALSE        9       11           NA    0.111400        10       continue
+    7 39 0.975  TRUE       10       11           NA    0.127200        11 go (reject H0)
 > oc <- flex_compare(design, list(m))
 > oc[, c("method", "type1", "power", "en0", "en1")]
     method      type1     power      en0      en1
