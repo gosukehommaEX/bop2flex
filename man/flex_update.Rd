@@ -39,8 +39,10 @@ interpolation, with \code{t} strictly increasing from 0 to 1 and
 default \code{NULL} uses \code{\link{flex_spending}(design)}.}
 
 \item{efficacy_floor}{A single logical value. With \code{TRUE} (the default)
-the efficacy boundary is never below the smallest count whose posterior
-probability reaches the final cutoff of the design.}
+the efficacy boundary is never below the boundary of the planned efficacy
+cutoff at the actual sample size, and the BOP2 design does not stop for
+efficacy at an interim analysis. With \code{FALSE} the efficacy
+boundaries are the spending boundaries.}
 }
 \value{
 An object of class \code{"flex_bounds"}, a list with elements
@@ -65,24 +67,39 @@ design (\code{\link{flex_spending}}), with \code{t = m / N} for the planned
 maximum sample size \code{N}. At the \code{k}-th actual analysis with
 \code{m_k} patients, the distribution of the number of responses under the
 null response rate among trials still running is computed exactly from the
-boundaries applied at the earlier analyses. The efficacy boundary is the
+boundaries applied at the earlier analyses. The spending boundary is the
 smallest count for which the cumulative type I error rate does not exceed
 \code{alpha(m_k / N)} at an interim analysis, or \code{alpha} at the final
 analysis, so that the final analysis uses the error rate not spent
-earlier. The efficacy boundary is never lower than the smallest count whose
-posterior probability \code{Pr(p > p0 | data)} reaches the final cutoff
-\code{lambda} of the design, so that efficacy is never claimed with weaker
-posterior evidence than the planned final analysis requires; for a design
-given by its boundary table, the smallest posterior probability at the
-planned efficacy boundaries that do not exceed the planned sample sizes is
-used instead of \code{lambda}. For a table obtained from
+earlier.
+
+The efficacy boundary is the spending boundary, raised when needed to the
+boundary of the planned efficacy cutoff at the actual sample size (see
+\code{\link{flex_boundary}}): the smallest count whose posterior
+probability \code{Pr(p > p0 | data)} reaches the efficacy cutoff
+\code{C_E(m_k / N)} at an interim analysis of the BOP2-FE design, or the
+final cutoff \code{lambda} at the final analysis. The BOP2 design has no
+efficacy cutoff at the interim analyses and does not stop for efficacy
+there. With the tuning parameters, the efficacy boundaries are therefore
+the boundaries of \code{\link{flex_naive}}, raised to the spending
+boundaries where they would spend more than the spending function allows.
+A design given by its boundary table has no cutoffs at unplanned sample
+sizes, so the smallest posterior probability at the planned efficacy
+boundaries that do not exceed the planned sample sizes is used instead of
+both \code{C_E(m_k / N)} and \code{lambda}. For a table obtained from
 \code{\link{flex_design}}, this is at least the \code{lambda} of every grid
-point that gives the table. This floor only raises boundaries; with the
-tuning parameters, or with a table obtained from \code{\link{flex_design}},
-it leaves the planned boundaries unchanged. The
-futility boundary is the planned futility cutoff \code{C_F(m_k / N)} (see
-\code{\link{flex_boundary}}) unless given in \code{futility}, and is lowered
-when needed to lie below the efficacy boundary.
+point that gives the table. A BOP2 design given by its table does not stop
+for efficacy at an interim analysis either. This floor only raises
+boundaries; with the tuning parameters, or with a table obtained from
+\code{\link{flex_design}}, it leaves the planned boundaries unchanged on
+the planned schedule.
+
+The futility boundary is the planned futility cutoff \code{C_F(m_k / N)}
+(see \code{\link{flex_boundary}}) unless given in \code{futility}, and is
+lowered when needed to lie below the efficacy boundary. With the tuning
+parameters and the floor, it is the futility boundary of
+\code{\link{flex_naive}} at every interim analysis, because \code{C_F(t)}
+does not exceed \code{C_E(t)}.
 
 For any sequence of analysis sample sizes chosen without regard to the
 observed responses, the type I error rate of the procedure is at most
@@ -98,9 +115,13 @@ sample sizes and are therefore reproduced unchanged.
 Another spending function can be supplied through \code{spending}, for
 example \code{alpha t^rho}, for comparison. The type I error guarantee holds
 for any non-decreasing spending function that starts at zero and does not
-exceed \code{alpha}, but only the implied spending function recovers the
-planned boundaries. The floor on the efficacy boundary can be removed with
-\code{efficacy_floor = FALSE}, which also keeps the guarantee.
+exceed \code{alpha}. Because the floor gives the planned boundaries on the
+planned schedule, a spending function that is at least the implied one at
+every planned interim analysis also recovers them. The floor can be
+removed with \code{efficacy_floor = FALSE}, which also keeps the
+guarantee. The efficacy boundaries are then the spending boundaries, and a
+BOP2 trial can stop for efficacy at an interim analysis after the last
+planned one, where the implied spending function is positive.
 }
 \examples{
 design <- flex_plan(p0 = 0.2, n = c(10, 15, 20, 25, 30, 35, 40),

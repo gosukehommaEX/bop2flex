@@ -12,7 +12,9 @@
 #' For the BOP2 design without interim efficacy stopping, the function is zero
 #' at every planned interim analysis and reaches the planned type I error rate
 #' at \code{t = 1}; by linear interpolation it is positive between the last
-#' planned interim analysis and the final analysis.
+#' planned interim analysis and the final analysis. With its default floor on
+#' the efficacy boundary, \code{\link{flex_update}} nevertheless does not stop
+#' a BOP2 trial for efficacy at an interim analysis.
 #'
 #' @param design An object of class \code{"flex_design"}.
 #'

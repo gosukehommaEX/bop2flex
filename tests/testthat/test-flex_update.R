@@ -50,9 +50,10 @@ test_that("flex_update handles BOP2 and non-binding designs", {
                     type = "BOP2")
   b <- flex_update(bop2, c(12, 16, 19, 25, 31, 37, 39), final = TRUE)
   expect_identical(b$bounds$futility, c(2L, 3L, 4L, 5L, 7L, 9L, 10L))
-  # An interim analysis after the last planned one (35 patients) receives
-  # part of the error rate through the linear spending function.
-  expect_identical(b$bounds$efficacy, c(13L, 17L, 20L, 26L, 32L, 13L, 11L))
+  # The BOP2 design does not stop for efficacy at an interim analysis, also
+  # after the last planned one (35 patients), where the implied spending
+  # function is positive
+  expect_identical(b$bounds$efficacy, c(13L, 17L, 20L, 26L, 32L, 38L, 11L))
   expect_equal(type1(b, bop2), 0.093521486536, tolerance = 1e-10)
   nb <- flex_plan(p0 = 0.2, n = n, alpha = 0.1, lambda = 0.91, gamma = 1,
                   eta = 2.5, binding = FALSE)
@@ -62,7 +63,7 @@ test_that("flex_update handles BOP2 and non-binding designs", {
   expect_equal(type1(b, nb), 0.077369122132, tolerance = 1e-10)
 })
 
-test_that("flex_update never claims efficacy below the final cutoff", {
+test_that("flex_update never claims efficacy below the planned cutoffs", {
   # Without the floor the final efficacy boundary at 50 patients would be 0.
   b <- flex_update(fe1, c(45, 50), final = TRUE)
   expect_identical(b$bounds$futility, c(12L, 13L))
@@ -96,14 +97,44 @@ test_that("flex_update controls the type I error rate on random schedules", {
                  numeric(1))
     expect_true(all(t1 <= d$alpha * (1 + 1e-9)))
     # The efficacy boundaries never fall below the final posterior cutoff
+    # nor below the naive boundaries, and the futility boundaries at the
+    # interim analyses are the naive ones
     for (s in sch[1:20]) {
       b <- flex_update(d, s, final = TRUE)$bounds
+      nv <- flex_naive(d, s, final = TRUE)$bounds
       floor <- vapply(b$m, function(m) {
         flex_efficacy_count(flex_posterior(0:m, m, d$p0), d$lambda)
       }, integer(1))
+      interim <- seq_len(length(s) - 1)
       expect_true(all(b$efficacy >= floor))
+      expect_true(all(b$efficacy >= nv$efficacy))
+      expect_identical(b$futility[interim], nv$futility[interim])
+      if (d$type == "BOP2") {
+        expect_identical(b$efficacy[interim], as.integer(s[interim]) + 1L)
+      }
     }
   }
+})
+
+test_that("the floor at an interim analysis is the efficacy cutoff", {
+  # Expected values from the independent Python implementation. With the
+  # O'Brien-Fleming type cutoff, C_E(7 / 40) requires 7 responses among 7
+  # patients, whereas the spending function alone would allow 6.
+  of <- flex_plan(p0 = 0.2, n = n, alpha = 0.1, lambda = 0.88, gamma = 0.95,
+                  method = "OF")
+  cut <- 2 * stats::pnorm(stats::qnorm((1 + 0.88) / 2) / sqrt(7 / 40)) - 1
+  post <- stats::pbeta(0.2, 0.2 + 0:7, 0.8 + 7 - 0:7, lower.tail = FALSE)
+  expect_identical(min(which(post >= cut)) - 1L, 7L)
+  b <- flex_update(of, c(7, 15))
+  expect_identical(b$bounds$efficacy, c(7L, 8L))
+  expect_equal(b$bounds$alpha_spent, c(0.0000128, 0.004241360323),
+               tolerance = 1e-9)
+  b0 <- flex_update(of, c(7, 15), efficacy_floor = FALSE)
+  expect_identical(b0$bounds$efficacy, c(6L, 8L))
+  b <- flex_update(of, c(7, 18, 20, 25, 33, 36, 41), final = TRUE)
+  expect_identical(b$bounds$futility, c(0L, 3L, 3L, 5L, 8L, 9L, 12L))
+  expect_identical(b$bounds$efficacy, c(7L, 8L, 8L, 10L, 11L, 11L, 13L))
+  expect_equal(type1(b, of), 0.091240128865, tolerance = 1e-10)
 })
 
 test_that("flex_update gives the same earlier boundaries at each analysis", {
@@ -124,6 +155,18 @@ test_that("flex_update works with a design given by its boundary table", {
   b2 <- flex_update(tab, c(12, 16), futility = c(1, 2))
   expect_identical(b2$bounds$futility, c(1L, 2L))
   expect_identical(b2$bounds$efficacy, c(7L, 8L))
+  # A BOP2 design given by its table does not stop for efficacy at an
+  # interim analysis
+  bop2 <- flex_plan(p0 = 0.2, n = n, alpha = 0.1, lambda = 0.84, gamma = 0.64,
+                    type = "BOP2")
+  tab2 <- flex_plan(p0 = 0.2, n = n, alpha = 0.1,
+                    futility = bop2$boundary$futility[-7],
+                    efficacy = bop2$boundary$efficacy)
+  expect_identical(tab2$type, "BOP2")
+  b3 <- flex_update(tab2, c(12, 16, 19, 25, 31, 37, 39), final = TRUE,
+                    futility = c(2, 3, 4, 5, 7, 9, NA))
+  expect_identical(b3$bounds$efficacy, c(13L, 17L, 20L, 26L, 32L, 38L, 11L))
+  expect_equal(type1(b3, tab2), 0.093521486536, tolerance = 1e-10)
 })
 
 test_that("tables of calibrated designs give the planned boundaries", {
@@ -201,6 +244,14 @@ test_that("flex_update can remove the efficacy floor", {
   b <- flex_update(fe1, c(39, 40, 41), final = TRUE, efficacy_floor = FALSE)
   expect_identical(b$bounds$efficacy, c(12L, 12L, 0L))
   expect_equal(type1(b, fe1), 0.087505235922, tolerance = 1e-10)
+  # Without the floor a BOP2 trial can stop for efficacy at an interim
+  # analysis after the last planned one
+  bop2 <- flex_plan(p0 = 0.2, n = n, alpha = 0.1, lambda = 0.84, gamma = 0.64,
+                    type = "BOP2")
+  b <- flex_update(bop2, c(12, 16, 19, 25, 31, 37, 39), final = TRUE,
+                   efficacy_floor = FALSE)
+  expect_identical(b$bounds$efficacy, c(13L, 17L, 20L, 26L, 32L, 13L, 11L))
+  expect_equal(b$bounds$alpha_spent[6], 0.020397744167, tolerance = 1e-9)
   sch <- flex_schedules(fe1, n_sim = 50, interim_shift = 3, final_shift = 6,
                         seed = 11)
   t1 <- vapply(sch, function(s) {
@@ -211,16 +262,23 @@ test_that("flex_update can remove the efficacy floor", {
 })
 
 test_that("flex_update accepts another spending function", {
-  # Independent Python values for the spending functions 0.1 t and 0.1 t^2
+  # Independent Python values for the spending functions 0.1 t and 0.1 t^2.
+  # The linear function exceeds the implied one at every planned interim
+  # analysis, so with the floor it recovers the planned boundaries.
   lin <- data.frame(t = c(0, 1), alpha_cum = c(0, 0.1))
+  expect_true(all(0.1 * fe1$n[-7] / 40 >= flex_spending(fe1)$alpha_cum[2:7]))
   b <- flex_update(fe1, n, final = TRUE, spending = lin)
+  expect_identical(b$bounds$futility, fe1$boundary$futility)
+  expect_identical(b$bounds$efficacy, fe1$boundary$efficacy)
+  b <- flex_update(fe1, n, final = TRUE, spending = lin,
+                   efficacy_floor = FALSE)
   expect_identical(b$bounds$futility, c(1L, 2L, 3L, 5L, 7L, 8L, 12L))
   expect_identical(b$bounds$efficacy, c(6L, 7L, 8L, 9L, 11L, 11L, 13L))
   expect_equal(type1(b, fe1), 0.089813386978, tolerance = 1e-10)
   b <- flex_update(fe1, c(12, 16, 19, 25, 31, 37, 39), final = TRUE,
                    spending = lin)
-  expect_identical(b$bounds$efficacy, c(6L, 7L, 8L, 9L, 11L, 12L, 12L))
-  expect_equal(type1(b, fe1), 0.095700542565, tolerance = 1e-10)
+  expect_identical(b$bounds$efficacy, c(7L, 8L, 8L, 9L, 11L, 12L, 12L))
+  expect_equal(type1(b, fe1), 0.087352614587, tolerance = 1e-10)
   tt <- seq(0, 1, length.out = 201)
   quad <- data.frame(t = tt, alpha_cum = 0.1 * tt^2)
   b <- flex_update(fe1, n, final = TRUE, spending = quad)

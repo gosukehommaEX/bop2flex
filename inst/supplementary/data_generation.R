@@ -746,12 +746,14 @@ add_number("overall.allpoints.n_single_lambda_varying",
 saveRDS(all_points, file.path(out_dir, "all_grid_points.rds"))
 
 # H. Designs specified by their boundary table
-# For a design given only by its boundary table, flex_update() replaces lambda
-# in the floor by the smallest posterior probability at the planned efficacy
-# boundaries that do not exceed the planned sample sizes. For the calibrated
-# designs and the TREND design, this floor is compared with the lambda of every
-# grid point that gives the table, and the table design is checked to give the
-# planned boundaries on the planned schedule.
+# For a design given only by its boundary table, flex_update() replaces the
+# cutoffs in the floor (C_E(t) at an interim analysis of a BOP2-FE design and
+# lambda at the final analysis) by the smallest posterior probability at the
+# planned efficacy boundaries that do not exceed the planned sample sizes. A
+# BOP2 table does not stop for efficacy at an interim analysis. For the
+# calibrated designs and the TREND design, this floor is compared with the
+# lambda of every grid point that gives the table, and the table design is
+# checked to give the planned boundaries on the planned schedule.
 message("H. Designs given by their boundary table (", elapsed(), ")")
 table_check <- function(d, lambda_all) {
   e <- d$boundary$efficacy

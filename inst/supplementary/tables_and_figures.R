@@ -157,8 +157,11 @@ writeLines(table_env(
   sprintf(paste(
     "The proposed boundaries were computed with and without the floor,",
     "which keeps the efficacy boundary at or above the smallest number",
-    "of responses whose posterior probability reaches the planned final",
-    "cutoff $\\lambda$. Changed: number of the %d schedules in which the",
+    "of responses whose posterior probability reaches the planned efficacy",
+    "cutoff at the actual sample size, $C_{\\mathrm{E}}(t)$ at an interim",
+    "analysis of the BOP2-FE designs and $\\lambda$ at the final analysis,",
+    "and removes efficacy stopping at the interim analyses of the BOP2",
+    "design. Changed: number of the %d schedules in which the",
     "floor raised at least one efficacy boundary. Largest raise: largest",
     "increase of an efficacy boundary, in responses. Final boundary 0:",
     "number of schedules in which, without the floor, the null hypothesis",

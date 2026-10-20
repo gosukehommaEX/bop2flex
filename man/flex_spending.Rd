@@ -28,7 +28,9 @@ boundaries, applying it on the planned schedule recovers those boundaries.
 For the BOP2 design without interim efficacy stopping, the function is zero
 at every planned interim analysis and reaches the planned type I error rate
 at \code{t = 1}; by linear interpolation it is positive between the last
-planned interim analysis and the final analysis.
+planned interim analysis and the final analysis. With its default floor on
+the efficacy boundary, \code{\link{flex_update}} nevertheless does not stop
+a BOP2 trial for efficacy at an interim analysis.
 }
 \examples{
 design <- flex_plan(p0 = 0.2, n = c(10, 15, 20, 25, 30, 35, 40),
